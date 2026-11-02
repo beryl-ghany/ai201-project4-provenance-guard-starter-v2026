@@ -54,8 +54,8 @@ DETECTOR_MAX_TOKENS = 400
 # down BEFORE you code it, and to put the numbers in your README. Whatever you
 # decide, it goes here.
 
-WEIGHT_MODEL_SIGNAL = 0.5
-WEIGHT_STYLE_SIGNAL = 0.5
+WEIGHT_MODEL_SIGNAL = 0.55
+WEIGHT_STYLE_SIGNAL = 0.45
 
 
 # ─── Thresholds (Milestone 5) ────────────────────────────────────────────────
@@ -108,3 +108,7 @@ RATE_LIMIT_STORAGE = "memory://"
 LOG_DIR = ROOT / "logs"
 AUDIT_LOG = LOG_DIR / "audit.jsonl"
 RESULTS_DIR = ROOT / "results"
+
+# Refuse empty submissions; truncate very long paste-ins instead of crashing.
+MAX_TEXT_CHARS = 50_000
+MIN_TEXT_CHARS = 20
