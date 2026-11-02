@@ -36,10 +36,19 @@
 
 ## What This Does
 
-<!-- The path a submission takes, from arriving to the label a reader sees.
-     Six or seven steps — this is the trace you wrote in Milestone 1. -->
+Provenance Guard is a small backend a writing site could call when someone posts text. It does not claim certainty; it returns a guess, a score, and plain-English label text, plus a way to appeal.
 
+Path from POST to label:
 
+1. **POST /submit** receives JSON with `text` and `creator_id`. The route rejects missing or empty text with HTTP 400.
+2. **Signal one** (`detector.model_signal`) runs the local GPT-2 model and scores how predictable the wording is (higher → more AI-like).
+3. **Signal two** (`stylometry.style_signal`) measures sentence-length spread, vocabulary repetition, and punctuation density (higher → more AI-like).
+4. **Combine** (`scoring.combine_signals`) merges the two scores with weights from `config.py`, pulling toward 0.5 when they disagree sharply.
+5. **Label** (`scoring.score_to_label`) maps the combined score to one of three reader-facing sentences using thresholds in `config.py`.
+6. **Audit** (`audit.log_decision`) appends a JSON line to `logs/audit.jsonl` with both signal scores and the label.
+7. The HTTP response returns `content_id`, `guess`, `confidence`, `label`, `model_score`, and `style_score` so the site can show the label and store the id for appeals.
+
+If the writer disagrees, **POST /appeal** with `content_id` and `reasoning` appends an appeal event and sets status to `under_review` without re-running the detector.
 
 ---
 
@@ -53,37 +62,29 @@
 
 ### Signal one — the model signal
 
-**What it measures:**
+**What it measures:** Perplexity under GPT-2 — how predictable each next token is. Low surprise becomes a high `model_score` (more AI-like).
 
-**Why that might differ between human and AI writing:**
+**Why that might differ between human and AI writing:** Models tend to produce fluent, common phrasing; human drafts can be odd, specific, or rough.
 
-**What it can't see:**
+**What it can't see:** Authorship. Plain, careful human prose (ESL writers, short sentences, simple vocabulary) can look as predictable as generated text. Ornate rare words can look “human” even when a model wrote them.
 
 ### Signal two — the style signal
 
-**What it measures:**
+**What it measures:** Sentence-length coefficient of variation, type-token ratio, and punctuation density, combined into one 0–1 score in `stylometry.style_signal`.
 
-**Why that might differ between human and AI writing:**
+**Why that might differ between human and AI writing:** Generated prose often marches in even sentence lengths with steady vocabulary; human drafts jump from three-word sentences to long ones.
 
-**What it can't see:**
+**What it can't see:** Meaning. Typos, pasted quotes, or manual line breaks change the shape without changing who wrote the argument — a cheap evasion path in unit 8.
 
 ### The combining rule
 
-<!-- Write the rule in words, then give the numbers. What happens when the two
-     signals disagree? -->
+**The rule:** Start with a weighted average of the two signals (both oriented so higher = more AI-like). If the two scores differ by more than 0.35, blend the average toward 0.5 — disagreement becomes uncertainty instead of a confident wrong side.
 
-**The rule:**
-
-**The numbers:**
+**The numbers:** `WEIGHT_MODEL_SIGNAL = 0.55`, `WEIGHT_STYLE_SIGNAL = 0.45`. Disagreement pull: up to 0.25 toward 0.5 when gap exceeds 0.35. Label thresholds: human ≤ 0.35, AI ≥ 0.65, unsure between.
 
 **Where it lives:** `scoring.py::combine_signals`
 
-<!-- ⚠️ The grader checks your code against that line. If your rule lives
-     somewhere else, say where. -->
-
-**A case where my two signals split, and what my rule does with it:**
-
-
+**A case where my two signals split, and what my rule does with it:** On my sample human paragraph, `model_score` was 0.45 (borderline predictable) but `style_score` was 0.14 (lumpy, human-shaped). The weighted average landed at 0.31 — human label — instead of averaging to a false “unsure” band.
 
 ---
 
@@ -96,16 +97,11 @@
 
 | Label | Score range | The exact text a reader sees |
 |---|---|---|
-| high-confidence human |  |  |
-| unsure |  |  |
-| high-confidence AI |  |  |
+| high-confidence human | 0.00 – 0.35 | This looks like it was written by a person. We are not treating it as AI-generated. |
+| unsure | 0.35 – 0.65 | We are not sure whether a person or a writing tool produced this. You can ask for a human review if you think we got it wrong. |
+| high-confidence AI | 0.65 – 1.00 | This text looks like it was mostly produced by an AI writing tool rather than written directly by a person. |
 
-**Why I worded the "unsure" one this way:**
-<!-- It's the hardest of the three. It has to admit uncertainty without
-     sounding like an accusation, because the person reading it may well have
-     written every word themselves. -->
-
-
+**Why I worded the "unsure" one this way:** It states uncertainty without calling the writer a cheater, and it points to the appeal path instead of leaving them stuck with a silent score.
 
 ---
 
@@ -122,35 +118,68 @@
      diagnostics. -->
 
 ```bash
-$ curl -X POST http://127.0.0.1:5000/submit \
-  -H "Content-Type: application/json" \
-  -d '{"text": "...", "creator_id": "..."}'
+curl.exe -X POST http://127.0.0.1:5000/submit -H "Content-Type: application/json" -d "{\"text\": \"I stayed up until two finishing this draft. My sentences are all over the place — some tiny, some way too long — and I keep changing my mind mid-paragraph about whether the ending works. Nobody asked me to write it; I just needed to get it out.\", \"creator_id\": \"creator_beryl_01\"}"
 ```
 
 ```json
-
+{
+  "combined_score": 0.3107,
+  "confidence": 0.3107,
+  "content_id": "90acb9c9-2204-46e2-8241-dbf7577bb2e6",
+  "guess": "human",
+  "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+  "model_score": 0.4511,
+  "style_score": 0.1391
+}
 ```
 
 **An appeal**
 
 ```bash
-$ curl -X POST http://127.0.0.1:5000/appeal \
-  -H "Content-Type: application/json" \
-  -d '{"content_id": "...", "reasoning": "..."}'
+curl.exe -X POST http://127.0.0.1:5000/appeal -H "Content-Type: application/json" -d "{\"content_id\": \"90acb9c9-2204-46e2-8241-dbf7577bb2e6\", \"reasoning\": \"I wrote every word myself at my kitchen table; please have a person review.\"}"
 ```
 
 ```json
-
+{
+  "appeal_logged_at": "2026-11-02T02:22:02+00:00",
+  "content_id": "90acb9c9-2204-46e2-8241-dbf7577bb2e6",
+  "message": "Your appeal was recorded. A reviewer will look at this submission.",
+  "ok": true,
+  "status": "under_review"
+}
 ```
 
 **What the log shows afterwards**
 
 ```bash
-$ curl "http://127.0.0.1:5000/log?limit=3"
+curl.exe "http://127.0.0.1:5000/log?limit=3"
 ```
 
 ```json
-
+{
+  "count": 2,
+  "entries": [
+    {
+      "timestamp": "2026-11-02T02:22:02+00:00",
+      "content_id": "90acb9c9-2204-46e2-8241-dbf7577bb2e6",
+      "creator_id": "creator_beryl_01",
+      "guess": "human",
+      "model_score": 0.4511,
+      "style_score": 0.1391,
+      "combined_score": 0.3107,
+      "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+      "status": "decided"
+    },
+    {
+      "timestamp": "2026-11-02T02:22:02+00:00",
+      "content_id": "90acb9c9-2204-46e2-8241-dbf7577bb2e6",
+      "creator_id": "creator_beryl_01",
+      "event": "appeal",
+      "status": "under_review",
+      "reasoning": "I wrote every word myself at my kitchen table; please have a person review."
+    }
+  ]
+}
 ```
 
 ---
@@ -159,15 +188,15 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* Whether each draft criterion in `criteria.md` could be checked by someone who could not ask me what I meant.
+- *What came back:* The false-positive criterion was testable; “handles uncertainty well” was not — it had no number.
+- *What I changed:* Kept the 1-in-10 false-positive cap and added explicit 400-on-empty-text and appeal-logging criteria instead of vague wording.
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* Strongest reader-side reading of my three label strings, as the writer not as the engineer.
+- *What came back:* The unsure label sounded like a soft accusation until it mentioned human review.
+- *What I changed:* Added the sentence “You can ask for a human review if you think we got it wrong” to the unsure variant.
 
 <!-- ═══════════════════════ UNIT 8 — THE TEST ═══════════════════════ -->
 
