@@ -30,6 +30,9 @@ from flask import Flask, jsonify, request
 
 import audit
 import config
+import detector
+import scoring
+import stylometry
 
 app = Flask(__name__)
 
@@ -199,17 +202,68 @@ def submit():
     what should this do when `text` is missing, empty, or enormous? A crash on
     a malformed input is one of the most common real failures there is.
     """
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        audit.log_rejection(creator_id="unknown", reason="invalid_json")
+        return jsonify({"error": "invalid_json", "message": "Body must be a JSON object."}), 400
 
-    # TODO: delete this and build the route.
+    creator_id = payload.get("creator_id")
+    text = payload.get("text")
+
+    if not isinstance(creator_id, str) or not creator_id.strip():
+        audit.log_rejection(creator_id="unknown", reason="missing_creator_id")
+        return jsonify({"error": "missing_creator_id"}), 400
+    creator_id = creator_id.strip()
+
+    if text is None or not isinstance(text, str) or not text.strip():
+        audit.log_rejection(creator_id=creator_id, reason="missing_or_empty_text")
+        return jsonify({"error": "missing_or_empty_text"}), 400
+
+    if len(text) > config.MAX_TEXT_CHARS:
+        text = text[: config.MAX_TEXT_CHARS]
+
+    if len(text.strip()) < config.MIN_TEXT_CHARS:
+        audit.log_rejection(creator_id=creator_id, reason="text_too_short")
+        return jsonify({
+            "error": "text_too_short",
+            "message": f"Need at least {config.MIN_TEXT_CHARS} characters to score.",
+        }), 400
+
+    content_id = str(uuid.uuid4())
+
+    try:
+        model_score = detector.model_signal(text)
+    except detector.DetectorUnavailable as exc:
+        return jsonify({"error": "detector_unavailable", "message": str(exc)}), 503
+    except ValueError as exc:
+        audit.log_rejection(creator_id=creator_id, reason="text_too_short", detail=str(exc))
+        return jsonify({"error": "text_too_short", "message": str(exc)}), 400
+
+    style_score = stylometry.style_signal(text)
+    combined = scoring.combine_signals(model_score, style_score)
+    guess, label = scoring.score_to_label(combined)
+    confidence = combined
+
+    audit.log_decision(
+        content_id=content_id,
+        creator_id=creator_id,
+        guess=guess,
+        model_score=model_score,
+        style_score=style_score,
+        combined_score=combined,
+        label=label,
+        status="decided",
+    )
+
     return jsonify({
-        "error": "not_implemented",
-        "message": "POST /submit isn't built yet — see the TODO in app.py.",
-        "you_sent": {
-            "text_length": len(payload.get("text", "")),
-            "creator_id": payload.get("creator_id"),
-        },
-    }), 501
+        "content_id": content_id,
+        "guess": guess,
+        "confidence": confidence,
+        "label": label,
+        "model_score": model_score,
+        "style_score": style_score,
+        "combined_score": combined,
+    })
 
 
 @app.post("/appeal")
@@ -232,14 +286,38 @@ def appeal():
     to the person on the other end. It's the only thing standing between a
     wrong accusation and nothing at all.
     """
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"error": "invalid_json"}), 400
 
-    # TODO: delete this and build the route.
+    content_id = payload.get("content_id")
+    reasoning = payload.get("reasoning")
+
+    if not isinstance(content_id, str) or not content_id.strip():
+        return jsonify({"error": "missing_content_id"}), 400
+    content_id = content_id.strip()
+
+    if not isinstance(reasoning, str) or not reasoning.strip():
+        return jsonify({"error": "missing_reasoning"}), 400
+
+    prior = audit.entries_for(content_id)
+    decision = next((e for e in prior if e.get("guess") is not None), None)
+    if decision is None:
+        return jsonify({
+            "error": "unknown_content_id",
+            "message": "No submission with that content_id appears in the audit log.",
+        }), 404
+
+    creator_id = decision.get("creator_id", "unknown")
+    entry = audit.log_appeal(content_id, creator_id, reasoning.strip())
+
     return jsonify({
-        "error": "not_implemented",
-        "message": "POST /appeal isn't built yet — see the TODO in app.py.",
-        "you_sent": payload,
-    }), 501
+        "ok": True,
+        "content_id": content_id,
+        "status": "under_review",
+        "message": "Your appeal was recorded. A reviewer will look at this submission.",
+        "appeal_logged_at": entry.get("timestamp"),
+    })
 
 
 # ── Already works ─────────────────────────────────────────────────────────────
