@@ -115,11 +115,19 @@ def main():
             results = []
             for i, body in enumerate(bodies_for(scenario), 1):
                 preview = describe(body)
+                log_before = 0
+                if scenario.get("expect_no_guess"):
+                    try:
+                        log_before = requests.get(
+                            f"{args.url}/log", timeout=5,
+                        ).json().get("count", 0)
+                    except Exception:  # noqa: BLE001
+                        log_before = 0
                 try:
                     response = requests.post(f"{args.url}/submit", json=body,
                                              timeout=args.timeout)
                     payload = response.json() if response.content else {}
-                    results.append({
+                    row = {
                         "status": response.status_code,
                         "guess": payload.get("guess"),
                         "confidence": payload.get("confidence"),
@@ -127,14 +135,49 @@ def main():
                         "style_score": payload.get("style_score"),
                         "label": payload.get("label"),
                         "sent": preview,
-                    })
+                    }
+                    if scenario.get("then_appeal"):
+                        cid = payload.get("content_id")
+                        if cid:
+                            appeal = requests.post(
+                                f"{args.url}/appeal",
+                                json={
+                                    "content_id": cid,
+                                    "reasoning": "I wrote this myself.",
+                                },
+                                timeout=30,
+                            )
+                            appeal_payload = appeal.json() if appeal.content else {}
+                            row["appeal_status"] = appeal.status_code
+                            row["appeal_ok"] = (
+                                appeal.status_code == 200
+                                and bool(appeal_payload.get("ok"))
+                            )
+                            log = requests.get(f"{args.url}/log", timeout=30)
+                            entries = (log.json() or {}).get("entries", [])
+                            row["log_under_review"] = any(
+                                e.get("content_id") == cid
+                                and e.get("event") == "appeal"
+                                and e.get("status") == "under_review"
+                                for e in entries
+                            )
+                        else:
+                            row["appeal_ok"] = False
+                            row["log_under_review"] = False
+                    if scenario.get("expect_no_guess"):
+                        log = requests.get(f"{args.url}/log", timeout=30)
+                        entries = (log.json() or {}).get("entries", [])
+                        new_entries = entries[log_before:]
+                        row["guess_row_in_log"] = any(
+                            e.get("guess") is not None for e in new_entries
+                        )
+                    results.append(row)
                 except Exception as exc:  # noqa: BLE001
                     results.append({"status": None, "error": f"{type(exc).__name__}: {exc}",
                                     "sent": preview})
 
             trials.append(results)
-            guesses = [r.get("guess") or "—" for r in results]
-            print(f"  trial {trial}: {', '.join(guesses)}")
+            print(f"  trial {trial}: {scenarios.trial_summary(scenario, results)}")
 
         rows.append({"scenario": scenario, "trials": trials})
 
@@ -158,8 +201,8 @@ def write_report(rows, args):
         "- Service: `app.py::submit` · scoring: `scoring.py::combine_signals`",
         f"- {n} trials per criterion · {dt.datetime.now().strftime('%Y-%m-%d %H:%M')}",
         "",
-        "Fill in Target from `criteria.md`, and Run and Verdict from the output",
-        "underneath. Whether a trial passed depends on the criterion you wrote.",
+        "Criteria 4 and 5 are scored automatically from status codes and the",
+        "audit log (see scenarios.trial_passed). The others still need a verdict.",
         "",
         f"| Criterion | Target | {headers} | Verdict |",
         f"|---|---|{divider}|---|",
@@ -169,7 +212,15 @@ def write_report(rows, args):
         scenario = row["scenario"]
         number = scenario.get("criterion")
         name = f"{number}. {scenario['name']}" if number else scenario["name"]
-        lines.append(f"| {name} |  | {' | '.join([' '] * n)} |  |")
+        run_cells = [scenarios.trial_summary(scenario, t) for t in row["trials"]]
+        auto = [scenarios.trial_passed(scenario, t) for t in row["trials"]]
+        if all(v is True for v in auto):
+            verdict = "MET"
+        elif any(v is False for v in auto):
+            verdict = "MISSED"
+        else:
+            verdict = ""
+        lines.append(f"| {name} |  | {' | '.join(run_cells)} | {verdict} |")
 
     lines += ["", "---", "", "## What actually came back", "",
               "Real output. Paste the relevant parts into your README — the rubric",

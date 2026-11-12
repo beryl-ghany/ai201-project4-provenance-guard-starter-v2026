@@ -1,81 +1,128 @@
 """
 What your test runs. ← UNIT 8, MILESTONE 3
-
-Each of your five criteria needs something run against it. A criterion about
-false positives needs your own writing. One about label coverage needs inputs
-across the score range. One about the appeal path needs a real content_id.
-
-Working that out is Milestone 3's first step, and this file is where you write
-it down. `run_eval.py` runs everything here three times.
-
-Two are filled in as examples. Replace them with what your criteria actually
-need — these are a shape, not a set.
-
-A scenario carries **either** of these:
-
-    "texts"   a list of strings. Each is sent as {"text": ..., "creator_id": ...}
-              with a creator_id made up for you. Use this for most criteria.
-
-    "bodies"  a list of whole request bodies, sent exactly as written. Use this
-              when the malformed request IS the point — empty text, no `text`
-              field at all, something enormous. A bad-input criterion needs it,
-              because you cannot express "the field is missing" as a string.
 """
 
 SCENARIOS = [
     {
         "name": "my own writing",
         "criterion": 1,
-        # ⚠️ PUT YOUR OWN WRITING HERE. Not AI text, not a sample from the web —
-        # things you actually wrote. This is the criterion that matters most and
-        # it's meaningless with someone else's prose.
         "texts": [
-            "REPLACE ME with a paragraph you wrote yourself.",
-            "REPLACE ME with another one. Ten pieces is the usual number.",
+            "I stayed up until two finishing this draft. My sentences are all over the place — "
+            "some tiny, some way too long — and I keep changing my mind mid-paragraph about "
+            "whether the ending works. Nobody asked me to write it; I just needed to get it out.",
+            "The bus was late again so I walked. Cold air, wet sneakers, my phone at twelve percent. "
+            "I thought about calling home and did not. Sometimes silence is easier than explaining.",
+            "My lab partner and I argued about error bars for twenty minutes. I still think we "
+            "should have used the wider interval, but the graph looked fine and we handed it in anyway.",
+            "Sunday laundry, then curry rice for dinner. I forgot the cilantro. It tasted fine without it, "
+            "which annoyed me more than it should have.",
+            "Dear future me: stop buying notebooks you never open. This one is different. (It is not.)",
+            "I rewrote the opening sentence six times. The sixth version is worse. I kept it because "
+            "starting over again felt impossible tonight.",
+            "Rain on the window during office hours. Three students canceled. I graded anyway and "
+            "left comments that were probably too long.",
+            "He said he was proud of me and I did not know what to say, so I nodded and changed the subject.",
+            "The playlist shuffle picked the wrong song at the wrong moment. I turned it off and "
+            "listened to traffic instead.",
+            "I am tired of pretending I have a five-year plan. I have next week and a list on my fridge.",
+        ],
+    },
+    {
+        "name": "calibration spread",
+        "criterion": 2,
+        "texts": [
+            "The implementation of the proposed framework requires careful consideration of several "
+            "key factors. First, it is important to note that the system must be able to handle a wide "
+            "variety of different inputs. Additionally, the overall performance of the solution depends "
+            "on a number of important variables.",
+            "I stayed up until two finishing this draft. My sentences are all over the place — some tiny, "
+            "some way too long — and I keep changing my mind mid-paragraph about whether the ending works.",
+            "I go store. Buy milk. Walk home. Rain. Shoes wet. Phone die. No call mom.",
+            "The implementation of the proposed framework requires careful consideration of several key factors. "
+            "Honestly though? I rewrote this twice and my cat walked on the keyboard once, so maybe that "
+            "counts as human editing.",
         ],
     },
     {
         "name": "label coverage",
-        "criterion": 2,
-        # Inputs spread across your score range, so you can check all three
-        # labels are actually reachable.
+        "criterion": 3,
         "texts": [
-            "REPLACE ME with something you're confident is AI-generated.",
-            "REPLACE ME with something you're confident is human-written.",
-            "REPLACE ME with something genuinely borderline.",
+            "In conclusion, it is worth noting that the aforementioned considerations demonstrate the "
+            "importance of a comprehensive approach. Furthermore, stakeholders should prioritize "
+            "scalability, maintainability, and robustness when evaluating potential solutions. "
+            "This ensures long-term viability and alignment with organizational objectives.",
+            "I spilled coffee on my hoodie, laughed at myself, and took the long way to class because "
+            "the shortcut smells like dumpsters in November and I was already in a mood.",
+            "The results are mixed. Some of it reads smooth and some of it sounds like me on a bad "
+            "Tuesday—half proud, half unsure, and too tired to fight about commas.",
         ],
     },
-    # A bad-input criterion looks like this. Uncomment and adjust if that's one
-    # of your five — these are raw request bodies, sent exactly as written.
-    #
-    # {
-    #     "name": "bad input",
-    #     "criterion": 3,
-    #     "bodies": [
-    #         {"text": "", "creator_id": "eval_bad_empty"},
-    #         {"creator_id": "eval_bad_missing"},          # no text field at all
-    #         {"text": "word " * 50000, "creator_id": "eval_bad_huge"},
-    #         {"text": None, "creator_id": "eval_bad_null"},
-    #     ],
-    # },
-
-    # TODO: add what your remaining criteria need.
-    #
-    # A criterion about the appeal path can't be tested by sending text alone;
-    # it needs a submission first and then an appeal against the content_id
-    # that came back. You'll need to test that one by hand, or extend this file
-    # and run_eval.py to do it. Saying which you did is part of the write-up.
+    {
+        "name": "appeal path",
+        "criterion": 4,
+        # Submit each text, then POST /appeal with the content_id that came back.
+        # Pass = HTTP 200 on the appeal AND a log row with event=appeal / under_review.
+        "then_appeal": True,
+        "texts": [
+            "Appeal test one: I wrote this on the train, half distracted, all mine.",
+            "Appeal test two: my sister proofread typos only; the ideas are still mine.",
+            "Appeal test three: short note to myself about groceries and overdue emails.",
+            "Appeal test four: rant about parking tickets. Petty, human, unfortunately accurate.",
+            "Appeal test five: draft email I never sent to my professor about extensions.",
+        ],
+    },
+    {
+        "name": "bad input",
+        "criterion": 5,
+        # Pass = HTTP 400 and no new audit row with a guess field.
+        "expect_status": 400,
+        "expect_no_guess": True,
+        "bodies": [
+            {"text": "", "creator_id": "eval_bad_empty"},
+            {"text": "   ", "creator_id": "eval_bad_whitespace"},
+            {"text": None, "creator_id": "eval_bad_null"},
+            {"creator_id": "eval_bad_missing_text"},
+            {"text": "tiny", "creator_id": "eval_bad_short"},
+        ],
+    },
 ]
 
 
-def validate() -> list[str]:
-    """
-    Complain about anything malformed, before a long run rather than during.
+def trial_summary(scenario: dict, results: list[dict]) -> str:
+    """One-cell summary for the Run Log table. Criteria 4 and 5 are auto-checked."""
+    criterion = scenario.get("criterion")
+    if criterion == 4:
+        n = sum(1 for r in results if r.get("appeal_ok") and r.get("log_under_review"))
+        return f"{n}/{len(results)} appeal + log"
+    if criterion == 5:
+        n = sum(
+            1 for r in results
+            if r.get("status") == scenario.get("expect_status", 400)
+            and not r.get("guess")
+            and not r.get("guess_row_in_log")
+        )
+        return f"{n}/{len(results)} return 400, no guess row"
+    guesses = [r.get("guess") or "—" for r in results]
+    return ", ".join(guesses)
 
-    A "bodies" scenario is deliberately exempt from the empty check — an empty
-    string is the whole point of a bad-input case, and refusing to run one
-    would make that criterion untestable.
-    """
+
+def trial_passed(scenario: dict, results: list[dict]) -> bool | None:
+    """True/False for criteria 4 and 5; None when the verdict is a judgment call."""
+    criterion = scenario.get("criterion")
+    if criterion == 4:
+        return all(r.get("appeal_ok") and r.get("log_under_review") for r in results)
+    if criterion == 5:
+        want = scenario.get("expect_status", 400)
+        return all(
+            r.get("status") == want
+            and not r.get("guess")
+            and not r.get("guess_row_in_log")
+            for r in results
+        )
+    return None
+
+
+def validate() -> list[str]:
     problems = []
     for i, scenario in enumerate(SCENARIOS, 1):
         if not scenario.get("name"):
@@ -105,12 +152,7 @@ def validate() -> list[str]:
             continue
 
         for j, text in enumerate(texts, 1):
-            if not str(text).strip():
-                problems.append(
-                    f"scenario {i}, text {j} is empty — if an empty submission is what "
-                    f"you're testing, use 'bodies' instead of 'texts'"
-                )
-            elif str(text).startswith("REPLACE ME"):
+            if str(text).startswith("REPLACE ME"):
                 problems.append(
                     f"scenario {i} ('{scenario.get('name')}'), text {j} is still "
                     f"the placeholder"
