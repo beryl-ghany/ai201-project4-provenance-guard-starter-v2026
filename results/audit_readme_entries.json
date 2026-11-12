@@ -1,0 +1,102 @@
+[
+  {
+    "timestamp": "2026-11-12T00:56:15+00:00",
+    "creator_id": "attacker_flood",
+    "event": "rejected",
+    "status": "rejected",
+    "reason": "rate_limited",
+    "limit": "10 per 1 minute"
+  },
+  {
+    "timestamp": "2026-11-12T01:09:39+00:00",
+    "content_id": "7d2e4a40-351b-48bf-b0f0-e1783315a143",
+    "creator_id": "attacker_FP05",
+    "guess": "unsure",
+    "model_score": 0.8005,
+    "style_score": 0.4902,
+    "combined_score": 0.5873,
+    "label": "We are not sure whether a person or a writing tool produced this. You can ask for a human review if you think we got it wrong.",
+    "status": "decided"
+  },
+  {
+    "timestamp": "2026-11-12T01:09:36+00:00",
+    "content_id": "b9513b92-e0aa-4d97-ae31-a32f074ebe84",
+    "creator_id": "attacker_EV01",
+    "guess": "human",
+    "model_score": 0.1635,
+    "style_score": 0.5339,
+    "combined_score": 0.2526,
+    "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+    "status": "decided"
+  },
+  {
+    "timestamp": "2026-11-12T01:09:38+00:00",
+    "content_id": "de231293-b4d5-41d7-88e0-95d4a6f15e38",
+    "creator_id": "attacker_EV10",
+    "guess": "ai",
+    "model_score": 0.9792,
+    "style_score": 0.5286,
+    "combined_score": 0.6872,
+    "label": "This text looks like it was mostly produced by an AI writing tool rather than written directly by a person.",
+    "status": "decided"
+  },
+  {
+    "timestamp": "2026-11-12T01:09:41+00:00",
+    "content_id": "e701ebae-c8fb-4a04-9b1e-b71b89252698",
+    "creator_id": "attacker_MF03",
+    "guess": "human",
+    "model_score": 0.0,
+    "style_score": 0.55,
+    "combined_score": 0.1985,
+    "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+    "status": "decided"
+  },
+  {
+    "timestamp": "2026-11-12T01:09:44+00:00",
+    "creator_id": "attacker_RQ12",
+    "event": "rejected",
+    "status": "rejected",
+    "reason": "missing_or_empty_text"
+  },
+  {
+    "timestamp": "2026-11-12T01:09:46+00:00",
+    "creator_id": "attacker_flood",
+    "event": "rejected",
+    "status": "rejected",
+    "reason": "rate_limited",
+    "limit": "10 per 1 minute"
+  },
+  {
+    "timestamp": "2026-11-12T01:09:46+00:00",
+    "content_id": "cfd63159-3ffe-46ef-9754-bb2e1d1c95ca",
+    "creator_id": "attacker_flood",
+    "guess": "human",
+    "model_score": 0.0287,
+    "style_score": 0.6673,
+    "combined_score": 0.257,
+    "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+    "status": "decided"
+  },
+  {
+    "timestamp": "2026-11-12T01:09:45+00:00",
+    "content_id": "e2a6f240-6db1-433c-921c-66bb338dcbc7",
+    "creator_id": "attacker_flood",
+    "guess": "human",
+    "model_score": 0.0287,
+    "style_score": 0.6673,
+    "combined_score": 0.257,
+    "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+    "status": "decided"
+  },
+  {
+    "timestamp": "2026-11-12T01:09:45+00:00",
+    "content_id": "eca78dab-166f-49f4-b056-9de03263de8f",
+    "creator_id": "attacker_flood",
+    "guess": "human",
+    "model_score": 0.0287,
+    "style_score": 0.6673,
+    "combined_score": 0.257,
+    "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+    "status": "decided"
+  }
+]
