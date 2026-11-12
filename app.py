@@ -154,7 +154,7 @@ def health():
 # ── YOU BUILD THIS ────────────────────────────────────────────────────────────
 
 @app.post("/submit")
-# @limiter.limit(f"{config.RATE_LIMIT_PER_MINUTE}/minute;{config.RATE_LIMIT_PER_DAY}/day")
+@limiter.limit(f"{config.RATE_LIMIT_PER_MINUTE}/minute;{config.RATE_LIMIT_PER_DAY}/day")
 def submit():
     """
     Take a piece of text, decide about it, log the decision, answer.
@@ -234,6 +234,12 @@ def submit():
     try:
         model_score = detector.model_signal(text)
     except detector.DetectorUnavailable as exc:
+        audit.log_rejection(
+            creator_id=creator_id,
+            reason="detector_unavailable",
+            detail=str(exc),
+            content_id=content_id,
+        )
         return jsonify({"error": "detector_unavailable", "message": str(exc)}), 503
     except ValueError as exc:
         audit.log_rejection(creator_id=creator_id, reason="text_too_short", detail=str(exc))
@@ -288,21 +294,29 @@ def appeal():
     """
     payload = request.get_json(silent=True)
     if not isinstance(payload, dict):
+        audit.log_rejection(creator_id="unknown", reason="invalid_json")
         return jsonify({"error": "invalid_json"}), 400
 
     content_id = payload.get("content_id")
     reasoning = payload.get("reasoning")
 
     if not isinstance(content_id, str) or not content_id.strip():
+        audit.log_rejection(creator_id="unknown", reason="missing_content_id")
         return jsonify({"error": "missing_content_id"}), 400
     content_id = content_id.strip()
 
     if not isinstance(reasoning, str) or not reasoning.strip():
+        audit.log_rejection(creator_id="unknown", reason="missing_reasoning")
         return jsonify({"error": "missing_reasoning"}), 400
 
     prior = audit.entries_for(content_id)
     decision = next((e for e in prior if e.get("guess") is not None), None)
     if decision is None:
+        audit.log_rejection(
+            creator_id="unknown",
+            reason="unknown_content_id",
+            content_id=content_id,
+        )
         return jsonify({
             "error": "unknown_content_id",
             "message": "No submission with that content_id appears in the audit log.",

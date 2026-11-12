@@ -27,8 +27,11 @@ def combine_signals(model_score: float, style_score: float) -> float:
         + config.WEIGHT_STYLE_SIGNAL * style_score
     )
     gap = abs(model_score - style_score)
-    if gap > 0.35:
-        pull = min((gap - 0.35) / 0.5, 1.0) * 0.25
+    if gap > config.DISAGREEMENT_GAP:
+        pull = min(
+            (gap - config.DISAGREEMENT_GAP) / config.DISAGREEMENT_RAMP,
+            1.0,
+        ) * config.DISAGREEMENT_PULL
         base = base * (1.0 - pull) + 0.5 * pull
     return round(min(max(base, 0.0), 1.0), 4)
 
@@ -47,3 +50,11 @@ def label_ranges() -> list[tuple[str, str]]:
         ("unsure", f"{config.HUMAN_THRESHOLD:.2f} – {config.AI_THRESHOLD:.2f}"),
         ("high-confidence AI", f"{config.AI_THRESHOLD:.2f} – 1.00"),
     ]
+
+
+if __name__ == "__main__":
+    # Hand-checked cases on each side of DISAGREEMENT_GAP. See test_combine.py.
+    below = combine_signals(0.80, 0.46)
+    above = combine_signals(0.90, 0.20)
+    print(f"below cutoff (0.80 vs 0.46, gap 0.34): {below}")
+    print(f"above cutoff (0.90 vs 0.20, gap 0.70): {above}")

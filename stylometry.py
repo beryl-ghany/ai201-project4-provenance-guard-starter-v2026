@@ -5,6 +5,8 @@ Signal two: the style signal. ← YOU BUILD THIS IN MILESTONE 4
 import re
 import statistics
 
+import config
+
 
 def sentences(text: str) -> list[str]:
     """Split into sentences. Rough and good enough — given to you."""
@@ -59,11 +61,11 @@ def style_signal(text: str) -> float:
     punct = punctuation_density(text)
 
     # Low length spread -> more AI-like (even sentences).
-    spread_ai = 1.0 - _clamp01(spread / 0.65)
+    spread_ai = 1.0 - _clamp01(spread / config.STYLE_SPREAD_NORM)
     # Very high repetition (low TTR on longer text) -> more AI-like.
-    ttr_ai = 1.0 - _clamp01(ttr / 0.75)
+    ttr_ai = 1.0 - _clamp01(ttr / config.STYLE_TTR_NORM)
     # Sparse punctuation -> slightly more AI-like.
-    punct_ai = 1.0 - _clamp01(punct * 12.0)
+    punct_ai = 1.0 - _clamp01(punct * config.STYLE_PUNCT_SCALE)
 
     combined = 0.55 * spread_ai + 0.30 * ttr_ai + 0.15 * punct_ai
     return round(_clamp01(combined), 4)

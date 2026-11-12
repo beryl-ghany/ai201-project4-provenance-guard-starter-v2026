@@ -55,7 +55,21 @@ DETECTOR_MAX_TOKENS = 400
 # decide, it goes here.
 
 WEIGHT_MODEL_SIGNAL = 0.55
-WEIGHT_STYLE_SIGNAL = 0.45
+WEIGHT_STYLE_SIGNAL = 0.30
+
+# When the two signals disagree by more than DISAGREEMENT_GAP, pull the
+# combined score toward 0.5 (uncertainty) instead of trusting the average.
+# Pull strength scales from 0 at the cutoff up to DISAGREEMENT_PULL when the
+# gap is cutoff + DISAGREEMENT_RAMP or more.
+DISAGREEMENT_GAP = 0.35
+DISAGREEMENT_PULL = 0.25
+DISAGREEMENT_RAMP = 0.5
+
+# Stylometry normalizers (style_signal). Named here so a before/after attack
+# run can change one number without hunting through stylometry.py.
+STYLE_SPREAD_NORM = 0.65   # sentence-length CV at/above this → fully "human" on spread
+STYLE_TTR_NORM = 0.75      # type-token ratio at/above this → fully "human" on vocab
+STYLE_PUNCT_SCALE = 12.0   # punctuation density * this, clamped to 1
 
 
 # ─── Thresholds (Milestone 5) ────────────────────────────────────────────────
@@ -92,7 +106,7 @@ AI_THRESHOLD = 0.65
 # an hour, and a script sending a thousand variations to map your thresholds.
 # Your README has to say why your numbers and not others.
 
-RATE_LIMITING_ENABLED = os.getenv("AI201_RATE_LIMITS", "0") == "1"
+RATE_LIMITING_ENABLED = os.getenv("AI201_RATE_LIMITS", "1") == "1"
 
 RATE_LIMIT_PER_MINUTE = 10
 RATE_LIMIT_PER_DAY = 200
