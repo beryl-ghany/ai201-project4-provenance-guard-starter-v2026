@@ -133,3 +133,9 @@ MIN_TEXT_CHARS = 20
 # refused before either signal runs. 0.40 sits under normal prose (usually
 # 0.7 or higher, spaces included) and above symbol strings (near 0).
 MIN_LETTER_RATIO = 0.40
+
+# A single repeated letter has ratio 1.0 and is still not writing. Two distinct
+# letters is the smallest cut that rejects that string. Real paragraphs in the
+# capstone cases clear it by a wide margin; a higher floor would start judging
+# vocabulary instead of "is this one character."
+MIN_DISTINCT_LETTERS = 2

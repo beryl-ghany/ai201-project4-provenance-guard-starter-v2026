@@ -358,17 +358,21 @@ def _submit_impl(recorded: dict):
         }
 
     ratio = writing_check.letter_ratio(text)
+    distinct = writing_check.distinct_letters(text)
     recorded["letter_ratio"] = round(ratio, 4)
+    recorded["distinct_letters"] = distinct
     if not writing_check.is_writing(text):
         audit.log_rejection(
             creator_id=creator_id,
             reason="not_writing",
             letter_ratio=round(ratio, 4),
+            distinct_letters=distinct,
         )
         return 400, {
             "error": "not_writing",
             "message": "This submission does not contain enough letters to score as writing.",
             "letter_ratio": round(ratio, 4),
+            "distinct_letters": distinct,
         }
 
     content_id = str(uuid.uuid4())

@@ -27,14 +27,16 @@ def test_arabic_letters_count_as_writing():
     assert writing_check.is_writing(ARABIC)
 
 
-def test_repeated_letter_still_counts_as_writing():
-    """The ratio gate does not see this. Recorded so the hole stays visible."""
-    assert writing_check.is_writing(capstone_cases.REPEATED_LETTER)
+def test_repeated_letter_is_not_writing():
+    """Ratio is 1.0. One distinct letter is still not a piece of writing."""
+    assert writing_check.letter_ratio(capstone_cases.REPEATED_LETTER) == 1.0
+    assert writing_check.distinct_letters(capstone_cases.REPEATED_LETTER) == 1
+    assert not writing_check.is_writing(capstone_cases.REPEATED_LETTER)
 
 
 if __name__ == "__main__":
     test_non_writing_is_below_the_ratio()
     test_prose_clears_the_ratio()
     test_arabic_letters_count_as_writing()
-    test_repeated_letter_still_counts_as_writing()
+    test_repeated_letter_is_not_writing()
     print("writing_check ok")
