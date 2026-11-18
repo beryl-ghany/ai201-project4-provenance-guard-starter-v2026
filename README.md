@@ -490,3 +490,19 @@ Evidence: `results/attack_run_2026-11-11_2009_after2.md` (the run that actually 
 ---
 
 📖 **How to run this project: [RUNNING.md](RUNNING.md)**
+
+## Capstone
+
+**What This Extends**
+
+Provenance Guard, the writing-check service already in this repository (units 7 and 8). What is new is one refusal in front of the two signals: a submission that is long enough to score, but whose Unicode letters are under 40% of its characters, now returns HTTP 400 with `error: not_writing` and does not get a guess. Every `/submit` and `/appeal`, including that refusal, appends a structured run record.
+
+**The Shape**
+
+Shape B, harden against failure. The extension is that bad path: punctuation, emoji, and digit strings no longer receive a label.
+
+Out of scope: a third signal, any change to the weights or the 0.35 / 0.65 label cutoffs, typo-normalization for the evasion attacks, and treating non-Latin prose as malformed. Arabic letters count as letters, so that text still gets scored. Hosting is out of scope as well. GPT-2 plus torch does not fit a 512 MB free instance, so the run path is local.
+
+**Running It**
+
+Path B. The start command, the Python version, the pinned dependencies, and the model download are in [RUNNING.md](RUNNING.md) under "Capstone — Path B, local with logs".
