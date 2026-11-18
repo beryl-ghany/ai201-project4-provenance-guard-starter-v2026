@@ -552,6 +552,8 @@ The first scored request in the session is not in that average. It loaded GPT-2 
 
 A hundred people, one warm submission each, process already up: 100 × 286.6 ms = 28,660 ms, about **28.7 seconds** of CPU. 100 × $0 = $0.
 
+A second ten, after the process was restarted for the improvement below, averaged 168.3 ms by the same method. I am keeping 286.6 ms as the reported per-run cost. Both samples put a warm pass under half a second.
+
 **Run Log and Verdicts**
 
 Evidence: `results/capstone_before.json`, produced by `run_capstone.py` against the service started from RUNNING.md. Three trials, nothing changed between them.
@@ -607,3 +609,63 @@ Criterion 5, `run_capstone.py::criterion_5`, trial 1, second warm call, after `d
 ```json
 {"status": 200, "elapsed_ms": 255.2, "guess": "human", "ok": true}
 ```
+
+**The Improvement**
+
+**What I changed:** `writing_check.is_writing` now also requires at least two distinct letters, case-insensitive (`config.MIN_DISTINCT_LETTERS = 2`). `app.py::_submit_impl` records `distinct_letters` on the refusal. Nothing in the weights, the thresholds, or the five criteria changed.
+
+**Why:** The before-fix probe. A 400-character run of `a` has letter ratio 1.0, so the ratio gate called it writing, and `detector.model_signal` scored it `ai` at 0.7585. The stage was `writing_check.is_writing`. The mechanism was that "letter" and "one letter, many times" are the same thing to a ratio.
+
+**Before** (same table as above):
+
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. Non-writing returns 400 not_writing | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Non-writing adds no guess row | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Refusal is logged under 200 ms | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Ordinary paragraphs still score | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Warm submit within 3 seconds | 9 of 10 | 10/10 | 10/10 | 10/10 | MET |
+
+Repeated-letter probe, three trials: HTTP 200, `guess: ai`, `combined_score: 0.7585`. Client times 343.0, 339.5, 315.8 ms.
+
+**After** (`results/capstone_after.json`, server restarted so it loaded this code):
+
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. Non-writing returns 400 not_writing | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Non-writing adds no guess row | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Refusal is logged under 200 ms | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Ordinary paragraphs still score | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Warm submit within 3 seconds | 9 of 10 | 10/10 | 10/10 | 10/10 | MET |
+
+The five verdicts did not move. They were already met, and the change was not aimed at them.
+
+The probe did move. Three trials returned HTTP 400, `error: not_writing`, no guess. Client times 9.6, 9.3, and 23.1 ms. The run record for trial 1, from `runlog.py::log_run` via `app.py::_submit_impl`:
+
+```json
+{"timestamp": "2026-11-18T22:59:26.095+00:00", "route": "/submit", "input": {"creator_id": "cap-repeat-t1", "text_excerpt": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "text_chars": 400, "letter_ratio": 1.0, "distinct_letters": 1}, "output": {"status": 400, "error": "not_writing"}, "duration_ms": 1.5}
+```
+
+Handler time 1.5 ms, so the model did not score it. That is the help. Ordinary paragraphs still returned 200 with both scores, so the extra check did not break criterion 4.
+
+**What's Still Broken**
+
+All five criteria are still met. The target I would tighten is criterion 5, from 9 of 10 under 3000 ms to 9 of 10 under 1000 ms. Warm calls in both sessions were under 500 ms. Three seconds only fails when GPT-2 is loaded again inside the request, and the criterion already waits until `detector_loaded` is true, so the bar barely constrains the warm path.
+
+What the gate still lets through: a string with two distinct letters and no spaces, such as `ab` repeated, has ratio 1.0 and passes `MIN_DISTINCT_LETTERS`. It would still be scored. I stopped there. The measurement I had was one repeated character, and raising the distinct-letter floor would start rejecting short real notes for having a small alphabet. Typo evasion and the 0.35 / 0.65 label cutoffs stayed out of scope.
+
+If this were a real writing site and I had another unit, the first change would be to require two word-like tokens — a run of letters, whitespace, another run of letters — before either signal runs. That is the same failure as the repeated letter, one step over: alphabetic, and still not a sentence. It is the next body this gate will label.
+
+**How I Used AI**
+
+**Moment 1**
+
+- *What I asked for:* Whether a draft of the refusal criterion could be scored the same way by two people who could not ask what I meant.
+- *What came back:* "Rejects junk quickly" cannot be scored. There is no count, no list of inputs, and no field that means "quickly."
+- *What I changed:* Criterion 3 names the five strings, the one new line in `logs/runs.jsonl`, the fields on that line, and `duration_ms` under 200. The 200 ms is there so a path that called the model would miss it.
+
+**Moment 2**
+
+- *What I asked for:* Whether a cold process start belonged in the per-run cost. Importing torch the first time in this session took on the order of ten minutes, and the first scored submit took 26.6 seconds.
+- *What came back:* That wait is paid once per process. A pass through the system, once the weights are loaded, is the request itself.
+- *What I changed:* The reported cost is the mean of ten warm requests, 286.6 ms, and the hundred-person line is 100 times that number. The 26.6 second load is written next to it and is not multiplied by 100.

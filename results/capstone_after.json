@@ -1,0 +1,1428 @@
+{
+  "label": "after",
+  "base": "http://127.0.0.1:5000",
+  "table": "| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |\n|---|---|---|---|---|---|\n| 1. Non-writing returns 400 not_writing | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |\n| 2. Non-writing adds no guess row | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |\n| 3. Refusal is logged under 200 ms | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |\n| 4. Ordinary paragraphs still score | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |\n| 5. Warm submit within 3 seconds | 9 of 10 | 10/10 | 10/10 | 10/10 | MET |",
+  "trials": [
+    {
+      "trial": 1,
+      "criteria": [
+        {
+          "name": "1. Non-writing returns 400 not_writing",
+          "target": "5 of 5",
+          "hits": 5,
+          "total": 5,
+          "score": "5/5",
+          "detail": [
+            {
+              "text": "!!! ??? ... ,,, ;;; --- ((( )))",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 14.2,
+              "ok": true
+            },
+            {
+              "text": "🙂🙃😀😃😄😁😆😅😂🤣🙂🙃😀😃😄😁😆😅😂🤣🙂🙃😀😃😄😁😆😅😂🤣",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 16.6,
+              "ok": true
+            },
+            {
+              "text": "#### $$$$ %%%% ^^^^ &&&& **** #### $$$$",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 6.9,
+              "ok": true
+            },
+            {
+              "text": "1234567890 1234567890 1234567890 1234567890",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 7.1,
+              "ok": true
+            },
+            {
+              "text": "---- ____ .... **** ~~~~ ++++ ==== ####",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 26.8,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "2. Non-writing adds no guess row",
+          "target": "5 of 5",
+          "hits": 5,
+          "total": 5,
+          "score": "5/5",
+          "detail": [
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 36.4,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:10+00:00",
+                  "creator_id": "cap-audit-t1-n1",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 9.7,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:10+00:00",
+                  "creator_id": "cap-audit-t1-n2",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 22.5,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:10+00:00",
+                  "creator_id": "cap-audit-t1-n3",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 17.1,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:10+00:00",
+                  "creator_id": "cap-audit-t1-n4",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 7.4,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:10+00:00",
+                  "creator_id": "cap-audit-t1-n5",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "3. Refusal is logged under 200 ms",
+          "target": "5 of 5",
+          "hits": 5,
+          "total": 5,
+          "score": "5/5",
+          "detail": [
+            {
+              "status": 400,
+              "elapsed_ms": 8.7,
+              "record": {
+                "timestamp": "2026-11-18T22:59:10.411+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t1-n1",
+                  "text_excerpt": "!!! ??? ... ,,, ;;; --- ((( )))",
+                  "text_chars": 31,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 1.1
+              },
+              "added": 1,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "elapsed_ms": 8.5,
+              "record": {
+                "timestamp": "2026-11-18T22:59:10.438+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t1-n2",
+                  "text_excerpt": "🙂🙃😀😃😄😁😆😅😂🤣🙂🙃😀😃😄😁😆😅😂🤣🙂🙃😀😃😄😁😆😅😂🤣",
+                  "text_chars": 30,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 1.1
+              },
+              "added": 1,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "elapsed_ms": 30.1,
+              "record": {
+                "timestamp": "2026-11-18T22:59:10.484+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t1-n3",
+                  "text_excerpt": "#### $$$$ %%%% ^^^^ &&&& **** #### $$$$",
+                  "text_chars": 39,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 0.8
+              },
+              "added": 1,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "elapsed_ms": 7.7,
+              "record": {
+                "timestamp": "2026-11-18T22:59:10.503+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t1-n4",
+                  "text_excerpt": "1234567890 1234567890 1234567890 1234567890",
+                  "text_chars": 43,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 0.9
+              },
+              "added": 1,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "elapsed_ms": 25.0,
+              "record": {
+                "timestamp": "2026-11-18T22:59:10.540+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t1-n5",
+                  "text_excerpt": "---- ____ .... **** ~~~~ ++++ ==== ####",
+                  "text_chars": 39,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 0.9
+              },
+              "added": 1,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "4. Ordinary paragraphs still score",
+          "target": "5 of 5",
+          "hits": 5,
+          "total": 5,
+          "score": "5/5",
+          "detail": [
+            {
+              "text": "I stayed up until two finishing this draft. My sentences jump from three words to a whole line, and I keep changing the ending.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.1793,
+                "confidence": 0.1793,
+                "content_id": "7092e96f-ca57-4698-9175-e780b40be6a6",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.1849,
+                "style_score": 0.2586
+              },
+              "elapsed_ms": 13416.9,
+              "ok": true
+            },
+            {
+              "text": "The tap was dripping again. I put a bowl under it, missed, and spent the next ten minutes chasing water across the counter with a towel.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.2314,
+                "confidence": 0.2314,
+                "content_id": "16b84b26-34e0-4452-901a-9fdce1b5e32b",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.3677,
+                "style_score": 0.0971
+              },
+              "elapsed_ms": 103.7,
+              "ok": true
+            },
+            {
+              "text": "We got to the platform as the doors were closing. Maya yelled for me to wait, then laughed because she had the tickets and I had the snacks.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.2834,
+                "confidence": 0.2834,
+                "content_id": "107f9bd6-dba2-49f7-869d-db7562c2e85c",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.341,
+                "style_score": 0.3195
+              },
+              "elapsed_ms": 166.8,
+              "ok": true
+            },
+            {
+              "text": "Chapter notes from Tuesday: the argument turns on one example, the harbor, and I still do not think the second paragraph earns that turn.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.2758,
+                "confidence": 0.2758,
+                "content_id": "80ec68dc-47a3-49ca-8408-07acaf720b3c",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.1049,
+                "style_score": 0.6474
+              },
+              "elapsed_ms": 87.6,
+              "ok": true
+            },
+            {
+              "text": "Dear building manager, the hallway light on the third floor has been out since Monday. I carried groceries up in the dark and nearly missed a step.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.3369,
+                "confidence": 0.3369,
+                "content_id": "a5d639bc-f1f7-4722-b9bc-2a3d2b3cd94b",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.3233,
+                "style_score": 0.5303
+              },
+              "elapsed_ms": 108.4,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "5. Warm submit within 3 seconds",
+          "target": "9 of 10",
+          "hits": 10,
+          "total": 10,
+          "score": "10/10",
+          "detail": {
+            "detector_loaded": true,
+            "calls": [
+              {
+                "status": 200,
+                "elapsed_ms": 173.8,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 184.7,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 153.1,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 168.6,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 125.3,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 174.7,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 170.0,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 161.3,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 170.5,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 119.8,
+                "guess": "human",
+                "ok": true
+              }
+            ]
+          }
+        }
+      ],
+      "probe_repeated_letter": {
+        "status": 400,
+        "guess": null,
+        "error": "not_writing",
+        "combined_score": null,
+        "elapsed_ms": 9.6
+      }
+    },
+    {
+      "trial": 2,
+      "criteria": [
+        {
+          "name": "1. Non-writing returns 400 not_writing",
+          "target": "5 of 5",
+          "hits": 5,
+          "total": 5,
+          "score": "5/5",
+          "detail": [
+            {
+              "text": "!!! ??? ... ,,, ;;; --- ((( )))",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 6.7,
+              "ok": true
+            },
+            {
+              "text": "🙂🙃😀😃😄😁😆😅😂🤣🙂🙃😀😃😄😁😆😅😂🤣🙂🙃😀😃😄😁😆😅😂🤣",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 5.6,
+              "ok": true
+            },
+            {
+              "text": "#### $$$$ %%%% ^^^^ &&&& **** #### $$$$",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 5.6,
+              "ok": true
+            },
+            {
+              "text": "1234567890 1234567890 1234567890 1234567890",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 6.3,
+              "ok": true
+            },
+            {
+              "text": "---- ____ .... **** ~~~~ ++++ ==== ####",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 7.5,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "2. Non-writing adds no guess row",
+          "target": "5 of 5",
+          "hits": 5,
+          "total": 5,
+          "score": "5/5",
+          "detail": [
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 5.9,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:26+00:00",
+                  "creator_id": "cap-audit-t2-n1",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 9.2,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:26+00:00",
+                  "creator_id": "cap-audit-t2-n2",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 10.6,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:26+00:00",
+                  "creator_id": "cap-audit-t2-n3",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 8.9,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:26+00:00",
+                  "creator_id": "cap-audit-t2-n4",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 10.1,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:26+00:00",
+                  "creator_id": "cap-audit-t2-n5",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "3. Refusal is logged under 200 ms",
+          "target": "5 of 5",
+          "hits": 5,
+          "total": 5,
+          "score": "5/5",
+          "detail": [
+            {
+              "status": 400,
+              "elapsed_ms": 7.6,
+              "record": {
+                "timestamp": "2026-11-18T22:59:26.249+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t2-n1",
+                  "text_excerpt": "!!! ??? ... ,,, ;;; --- ((( )))",
+                  "text_chars": 31,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 0.8
+              },
+              "added": 1,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "elapsed_ms": 7.4,
+              "record": {
+                "timestamp": "2026-11-18T22:59:26.268+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t2-n2",
+                  "text_excerpt": "🙂🙃😀😃😄😁😆😅😂🤣🙂🙃😀😃😄😁😆😅😂🤣🙂🙃😀😃😄😁😆😅😂🤣",
+                  "text_chars": 30,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 1.0
+              },
+              "added": 1,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "elapsed_ms": 23.7,
+              "record": {
+                "timestamp": "2026-11-18T22:59:26.301+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t2-n3",
+                  "text_excerpt": "#### $$$$ %%%% ^^^^ &&&& **** #### $$$$",
+                  "text_chars": 39,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 1.1
+              },
+              "added": 1,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "elapsed_ms": 32.3,
+              "record": {
+                "timestamp": "2026-11-18T22:59:26.343+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t2-n4",
+                  "text_excerpt": "1234567890 1234567890 1234567890 1234567890",
+                  "text_chars": 43,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 1.4
+              },
+              "added": 1,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "elapsed_ms": 9.7,
+              "record": {
+                "timestamp": "2026-11-18T22:59:26.369+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t2-n5",
+                  "text_excerpt": "---- ____ .... **** ~~~~ ++++ ==== ####",
+                  "text_chars": 39,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 1.5
+              },
+              "added": 1,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "4. Ordinary paragraphs still score",
+          "target": "5 of 5",
+          "hits": 5,
+          "total": 5,
+          "score": "5/5",
+          "detail": [
+            {
+              "text": "I stayed up until two finishing this draft. My sentences jump from three words to a whole line, and I keep changing the ending.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.1793,
+                "confidence": 0.1793,
+                "content_id": "bf6ab441-d4b0-42ba-bc77-86e967a0388e",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.1849,
+                "style_score": 0.2586
+              },
+              "elapsed_ms": 92.8,
+              "ok": true
+            },
+            {
+              "text": "The tap was dripping again. I put a bowl under it, missed, and spent the next ten minutes chasing water across the counter with a towel.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.2314,
+                "confidence": 0.2314,
+                "content_id": "54a67600-b6ce-4a48-9c8e-17fbc3665436",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.3677,
+                "style_score": 0.0971
+              },
+              "elapsed_ms": 98.7,
+              "ok": true
+            },
+            {
+              "text": "We got to the platform as the doors were closing. Maya yelled for me to wait, then laughed because she had the tickets and I had the snacks.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.2834,
+                "confidence": 0.2834,
+                "content_id": "f3c6e232-a2b3-4d45-a33f-b67eecf1086f",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.341,
+                "style_score": 0.3195
+              },
+              "elapsed_ms": 93.5,
+              "ok": true
+            },
+            {
+              "text": "Chapter notes from Tuesday: the argument turns on one example, the harbor, and I still do not think the second paragraph earns that turn.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.2758,
+                "confidence": 0.2758,
+                "content_id": "06cd3c9f-54e9-4bbf-ab6a-1db1ce99d261",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.1049,
+                "style_score": 0.6474
+              },
+              "elapsed_ms": 92.3,
+              "ok": true
+            },
+            {
+              "text": "Dear building manager, the hallway light on the third floor has been out since Monday. I carried groceries up in the dark and nearly missed a step.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.3369,
+                "confidence": 0.3369,
+                "content_id": "e23dfee7-0741-4f12-9226-644f49a7a0a1",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.3233,
+                "style_score": 0.5303
+              },
+              "elapsed_ms": 82.0,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "5. Warm submit within 3 seconds",
+          "target": "9 of 10",
+          "hits": 10,
+          "total": 10,
+          "score": "10/10",
+          "detail": {
+            "detector_loaded": true,
+            "calls": [
+              {
+                "status": 200,
+                "elapsed_ms": 170.6,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 144.1,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 162.6,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 107.9,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 113.8,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 169.6,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 152.2,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 164.0,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 182.3,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 119.1,
+                "guess": "human",
+                "ok": true
+              }
+            ]
+          }
+        }
+      ],
+      "probe_repeated_letter": {
+        "status": 400,
+        "guess": null,
+        "error": "not_writing",
+        "combined_score": null,
+        "elapsed_ms": 9.3
+      }
+    },
+    {
+      "trial": 3,
+      "criteria": [
+        {
+          "name": "1. Non-writing returns 400 not_writing",
+          "target": "5 of 5",
+          "hits": 5,
+          "total": 5,
+          "score": "5/5",
+          "detail": [
+            {
+              "text": "!!! ??? ... ,,, ;;; --- ((( )))",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 8.5,
+              "ok": true
+            },
+            {
+              "text": "🙂🙃😀😃😄😁😆😅😂🤣🙂🙃😀😃😄😁😆😅😂🤣🙂🙃😀😃😄😁😆😅😂🤣",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 8.9,
+              "ok": true
+            },
+            {
+              "text": "#### $$$$ %%%% ^^^^ &&&& **** #### $$$$",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 8.0,
+              "ok": true
+            },
+            {
+              "text": "1234567890 1234567890 1234567890 1234567890",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 7.9,
+              "ok": true
+            },
+            {
+              "text": "---- ____ .... **** ~~~~ ++++ ==== ####",
+              "status": 400,
+              "body": {
+                "distinct_letters": 0,
+                "error": "not_writing",
+                "letter_ratio": 0.0,
+                "message": "This submission does not contain enough letters to score as writing."
+              },
+              "elapsed_ms": 6.4,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "2. Non-writing adds no guess row",
+          "target": "5 of 5",
+          "hits": 5,
+          "total": 5,
+          "score": "5/5",
+          "detail": [
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 6.7,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:28+00:00",
+                  "creator_id": "cap-audit-t3-n1",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 7.2,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:28+00:00",
+                  "creator_id": "cap-audit-t3-n2",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 24.7,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:28+00:00",
+                  "creator_id": "cap-audit-t3-n3",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 7.8,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:28+00:00",
+                  "creator_id": "cap-audit-t3-n4",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "error": "not_writing",
+              "elapsed_ms": 10.2,
+              "audit_added": [
+                {
+                  "timestamp": "2026-11-18T22:59:28+00:00",
+                  "creator_id": "cap-audit-t3-n5",
+                  "event": "rejected",
+                  "status": "rejected",
+                  "reason": "not_writing",
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                }
+              ],
+              "guess_rows": 0,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "3. Refusal is logged under 200 ms",
+          "target": "5 of 5",
+          "hits": 5,
+          "total": 5,
+          "score": "5/5",
+          "detail": [
+            {
+              "status": 400,
+              "elapsed_ms": 8.9,
+              "record": {
+                "timestamp": "2026-11-18T22:59:28.562+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t3-n1",
+                  "text_excerpt": "!!! ??? ... ,,, ;;; --- ((( )))",
+                  "text_chars": 31,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 1.4
+              },
+              "added": 1,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "elapsed_ms": 26.8,
+              "record": {
+                "timestamp": "2026-11-18T22:59:28.597+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t3-n2",
+                  "text_excerpt": "🙂🙃😀😃😄😁😆😅😂🤣🙂🙃😀😃😄😁😆😅😂🤣🙂🙃😀😃😄😁😆😅😂🤣",
+                  "text_chars": 30,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 1.0
+              },
+              "added": 1,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "elapsed_ms": 20.2,
+              "record": {
+                "timestamp": "2026-11-18T22:59:28.628+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t3-n3",
+                  "text_excerpt": "#### $$$$ %%%% ^^^^ &&&& **** #### $$$$",
+                  "text_chars": 39,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 1.3
+              },
+              "added": 1,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "elapsed_ms": 25.8,
+              "record": {
+                "timestamp": "2026-11-18T22:59:28.673+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t3-n4",
+                  "text_excerpt": "1234567890 1234567890 1234567890 1234567890",
+                  "text_chars": 43,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 1.6
+              },
+              "added": 1,
+              "ok": true
+            },
+            {
+              "status": 400,
+              "elapsed_ms": 34.7,
+              "record": {
+                "timestamp": "2026-11-18T22:59:28.722+00:00",
+                "route": "/submit",
+                "input": {
+                  "creator_id": "cap-log-t3-n5",
+                  "text_excerpt": "---- ____ .... **** ~~~~ ++++ ==== ####",
+                  "text_chars": 39,
+                  "letter_ratio": 0.0,
+                  "distinct_letters": 0
+                },
+                "output": {
+                  "status": 400,
+                  "error": "not_writing"
+                },
+                "duration_ms": 1.6
+              },
+              "added": 1,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "4. Ordinary paragraphs still score",
+          "target": "5 of 5",
+          "hits": 5,
+          "total": 5,
+          "score": "5/5",
+          "detail": [
+            {
+              "text": "I stayed up until two finishing this draft. My sentences jump from three words to a whole line, and I keep changing the ending.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.1793,
+                "confidence": 0.1793,
+                "content_id": "90905da6-c72d-484a-8956-e9d975a209e4",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.1849,
+                "style_score": 0.2586
+              },
+              "elapsed_ms": 101.3,
+              "ok": true
+            },
+            {
+              "text": "The tap was dripping again. I put a bowl under it, missed, and spent the next ten minutes chasing water across the counter with a towel.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.2314,
+                "confidence": 0.2314,
+                "content_id": "87abf48d-6a41-4e65-9848-d60a95c49370",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.3677,
+                "style_score": 0.0971
+              },
+              "elapsed_ms": 89.7,
+              "ok": true
+            },
+            {
+              "text": "We got to the platform as the doors were closing. Maya yelled for me to wait, then laughed because she had the tickets and I had the snacks.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.2834,
+                "confidence": 0.2834,
+                "content_id": "92ca528a-8d62-419f-9b9d-42255f416d21",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.341,
+                "style_score": 0.3195
+              },
+              "elapsed_ms": 84.3,
+              "ok": true
+            },
+            {
+              "text": "Chapter notes from Tuesday: the argument turns on one example, the harbor, and I still do not think the second paragraph earns that turn.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.2758,
+                "confidence": 0.2758,
+                "content_id": "a5471443-8b35-4d7a-9a29-d6e385f30b80",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.1049,
+                "style_score": 0.6474
+              },
+              "elapsed_ms": 92.9,
+              "ok": true
+            },
+            {
+              "text": "Dear building manager, the hallway light on the third floor has been out since Monday. I carried groceries up in the dark and nearly missed a step.",
+              "status": 200,
+              "body": {
+                "combined_score": 0.3369,
+                "confidence": 0.3369,
+                "content_id": "cf66ff3e-92ca-404b-a93c-c6f2edc3beef",
+                "guess": "human",
+                "label": "This looks like it was written by a person. We are not treating it as AI-generated.",
+                "model_score": 0.3233,
+                "style_score": 0.5303
+              },
+              "elapsed_ms": 95.0,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "name": "5. Warm submit within 3 seconds",
+          "target": "9 of 10",
+          "hits": 10,
+          "total": 10,
+          "score": "10/10",
+          "detail": {
+            "detector_loaded": true,
+            "calls": [
+              {
+                "status": 200,
+                "elapsed_ms": 213.8,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 190.2,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 158.9,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 133.5,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 174.6,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 145.4,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 159.9,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 110.2,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 112.6,
+                "guess": "human",
+                "ok": true
+              },
+              {
+                "status": 200,
+                "elapsed_ms": 178.8,
+                "guess": "human",
+                "ok": true
+              }
+            ]
+          }
+        }
+      ],
+      "probe_repeated_letter": {
+        "status": 400,
+        "guess": null,
+        "error": "not_writing",
+        "combined_score": null,
+        "elapsed_ms": 23.1
+      }
+    }
+  ],
+  "cost": {
+    "samples": [
+      {
+        "status": 200,
+        "elapsed_ms": 148.3,
+        "guess": "human"
+      },
+      {
+        "status": 200,
+        "elapsed_ms": 159.9,
+        "guess": "human"
+      },
+      {
+        "status": 200,
+        "elapsed_ms": 160.3,
+        "guess": "human"
+      },
+      {
+        "status": 200,
+        "elapsed_ms": 161.3,
+        "guess": "human"
+      },
+      {
+        "status": 200,
+        "elapsed_ms": 188.7,
+        "guess": "human"
+      },
+      {
+        "status": 200,
+        "elapsed_ms": 174.7,
+        "guess": "human"
+      },
+      {
+        "status": 200,
+        "elapsed_ms": 160.2,
+        "guess": "human"
+      },
+      {
+        "status": 200,
+        "elapsed_ms": 190.9,
+        "guess": "human"
+      },
+      {
+        "status": 200,
+        "elapsed_ms": 181.0,
+        "guess": "human"
+      },
+      {
+        "status": 200,
+        "elapsed_ms": 157.9,
+        "guess": "human"
+      }
+    ],
+    "average_ms": 168.3,
+    "n": 10
+  }
+}

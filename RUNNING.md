@@ -24,7 +24,7 @@ curl.exe http://127.0.0.1:5000/health
 
 - Python 3.12 (3.11 or 3.13 also match `requirements.txt`; not 3.14)
 - Dependencies pinned in `requirements.txt`, installed into `.venv`
-- The `gpt2` weights, downloaded once by `python detector.py` into the Hugging Face cache (about 550 MB of weight files, plus torch in the venv)
+- The `gpt2` weights, downloaded once by `python detector.py` into the Hugging Face cache. On this machine `model.safetensors` is 548,105,171 bytes (523 MB) and the `models--gpt2` cache folder is 525.4 MB, plus torch in the venv. A 512 MB host cannot hold that.
 
 **From a clean checkout, once:**
 
