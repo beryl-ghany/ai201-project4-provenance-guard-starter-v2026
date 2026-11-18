@@ -121,8 +121,15 @@ RATE_LIMIT_STORAGE = "memory://"
 
 LOG_DIR = ROOT / "logs"
 AUDIT_LOG = LOG_DIR / "audit.jsonl"
+RUN_LOG = LOG_DIR / "runs.jsonl"
 RESULTS_DIR = ROOT / "results"
 
 # Refuse empty submissions; truncate very long paste-ins instead of crashing.
 MAX_TEXT_CHARS = 50_000
 MIN_TEXT_CHARS = 20
+
+# Capstone (shape B). A body can clear MIN_TEXT_CHARS and still not be writing:
+# punctuation, emoji, or digits. Unicode letters / length below this ratio is
+# refused before either signal runs. 0.40 sits under normal prose (usually
+# 0.7 or higher, spaces included) and above symbol strings (near 0).
+MIN_LETTER_RATIO = 0.40
