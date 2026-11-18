@@ -1,5 +1,48 @@
 # Running Provenance Guard
 
+## Capstone — Path B, local with logs
+
+This service loads GPT-2 and torch. Those two together are larger than the 512 MB free host this course uses, and a free host has no disk that survives sleep, so the weights would download again after every idle spin-down. Path B is the run path: one command on this machine, and a log file you can read afterwards.
+
+**The command that starts it** (repo root, after the setup below):
+
+```powershell
+$env:AI201_DEBUG = "0"; .\.venv\Scripts\python.exe app.py
+```
+
+`AI201_DEBUG=0` keeps Flask from starting a second process. The service listens on `http://127.0.0.1:5000`. Leave that window open. A second terminal talks to it with `curl.exe`.
+
+Check:
+
+```powershell
+curl.exe http://127.0.0.1:5000/health
+```
+
+`detector_loaded` stays false until the first real `/submit`. That first submit loads the weights and can take a while. Later submits are the ones to time.
+
+**What the environment needs**
+
+- Python 3.12 (3.11 or 3.13 also match `requirements.txt`; not 3.14)
+- Dependencies pinned in `requirements.txt`, installed into `.venv`
+- The `gpt2` weights, downloaded once by `python detector.py` into the Hugging Face cache (about 550 MB of weight files, plus torch in the venv)
+
+**From a clean checkout, once:**
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe detector.py
+$env:AI201_DEBUG = "0"; .\.venv\Scripts\python.exe app.py
+```
+
+The last line is the start command. The three lines above it are setup, not a second way to run it.
+
+Every `/submit` and `/appeal`, including a refusal, appends one JSON object to `logs/runs.jsonl` with `timestamp`, `input`, `output`, and `duration_ms`.
+
+The rest of this file is the unit 7–8 guide.
+
+---
+
 Everything about how the starter works.
 
 This is a **web service**. It runs on your machine and you talk to it with
