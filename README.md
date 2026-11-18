@@ -505,4 +505,105 @@ Out of scope: a third signal, any change to the weights or the 0.35 / 0.65 label
 
 **Running It**
 
-Path B. The start command, the Python version, the pinned dependencies, and the model download are in [RUNNING.md](RUNNING.md) under "Capstone — Path B, local with logs".
+Path B. The start command, the Python version, the pinned dependencies, and the model download are in [RUNNING.md](RUNNING.md) under "Capstone — Path B, local with logs". I started it with that command (`AI201_DEBUG=0`, the venv interpreter, `app.py`). `GET /health` answered, and `detector_loaded` was false until the first scored submit.
+
+The `gpt2` cache on this machine is 525.4 MB. The weight file `model.safetensors` is 548,105,171 bytes (523 MB). Torch stays in the virtualenv. That is why this is not on the 512 MB host.
+
+**Instrumentation**
+
+Every `/submit` and `/appeal` calls `runlog.log_run` from `app.py::_run_view` (a 429 calls it from the rate-limit handler). One JSON object per request, appended to `logs/runs.jsonl`. Fields:
+
+- `timestamp` — UTC, to the millisecond
+- `route` — `/submit` or `/appeal`
+- `input` — `creator_id`, `text_excerpt` (first 200 characters), `text_chars`, `letter_ratio`
+- `output` — `status`, and either `error` or `guess`, `content_id`, and `combined_score`
+- `duration_ms` — time inside the handler, not process start
+
+A refusal is a record, not a missing line. The file and function that write it are `runlog.py::log_run`.
+
+Ten scored entries from the before-fix session:
+
+```json
+{"timestamp": "2026-11-18T22:54:35.736+00:00", "route": "/submit", "input": {"creator_id": "cap-prose-t1-n1", "text_excerpt": "I stayed up until two finishing this draft. My sentences jump from three words to a whole line, and I keep changing the ending.", "text_chars": 127, "letter_ratio": 0.7953}, "output": {"status": 200, "guess": "human", "content_id": "77ee3b0a-b659-4385-9dbd-f44df12fa7cd", "combined_score": 0.1793}, "duration_ms": 26531.3}
+{"timestamp": "2026-11-18T22:54:35.932+00:00", "route": "/submit", "input": {"creator_id": "cap-prose-t1-n2", "text_excerpt": "The tap was dripping again. I put a bowl under it, missed, and spent the next ten minutes chasing water across the counter with a towel.", "text_chars": 136, "letter_ratio": 0.7868}, "output": {"status": 200, "guess": "human", "content_id": "3bcb06c6-6f04-476f-b826-e25191ca1104", "combined_score": 0.2314}, "duration_ms": 185.0}
+{"timestamp": "2026-11-18T22:54:36.142+00:00", "route": "/submit", "input": {"creator_id": "cap-prose-t1-n3", "text_excerpt": "We got to the platform as the doors were closing. Maya yelled for me to wait, then laughed because she had the tickets and I had the snacks.", "text_chars": 140, "letter_ratio": 0.7857}, "output": {"status": 200, "guess": "human", "content_id": "bc0c03b5-ddc2-4858-96be-05689e6c0705", "combined_score": 0.2834}, "duration_ms": 200.6}
+{"timestamp": "2026-11-18T22:54:36.320+00:00", "route": "/submit", "input": {"creator_id": "cap-prose-t1-n4", "text_excerpt": "Chapter notes from Tuesday: the argument turns on one example, the harbor, and I still do not think the second paragraph earns that turn.", "text_chars": 137, "letter_ratio": 0.8029}, "output": {"status": 200, "guess": "human", "content_id": "31fac10a-c80e-4ab8-b92a-f226a51a1aa0", "combined_score": 0.2758}, "duration_ms": 167.1}
+{"timestamp": "2026-11-18T22:54:36.512+00:00", "route": "/submit", "input": {"creator_id": "cap-prose-t1-n5", "text_excerpt": "Dear building manager, the hallway light on the third floor has been out since Monday. I carried groceries up in the dark and nearly missed a step.", "text_chars": 147, "letter_ratio": 0.8027}, "output": {"status": 200, "guess": "human", "content_id": "ad3ff974-9d96-4783-99e1-fe7999732f21", "combined_score": 0.3369}, "duration_ms": 179.9}
+{"timestamp": "2026-11-18T22:54:36.930+00:00", "route": "/submit", "input": {"creator_id": "cap-lat-t1-n1", "text_excerpt": "I wrote this paragraph so a warm request would have something ordinary to score. It is about a walk to the store in the rain, a torn grocery bag, and the orange that rolled into the street. None of th", "text_chars": 367, "letter_ratio": 0.7847}, "output": {"status": 200, "guess": "human", "content_id": "59ac9e72-8259-40fc-801f-fe75a1a1a16e", "combined_score": 0.2551}, "duration_ms": 357.7}
+{"timestamp": "2026-11-18T22:54:37.184+00:00", "route": "/submit", "input": {"creator_id": "cap-lat-t1-n2", "text_excerpt": "I wrote this paragraph so a warm request would have something ordinary to score. It is about a walk to the store in the rain, a torn grocery bag, and the orange that rolled into the street. None of th", "text_chars": 367, "letter_ratio": 0.7847}, "output": {"status": 200, "guess": "human", "content_id": "88a376ab-6e2d-4b34-8cd2-29622f7b4e46", "combined_score": 0.2551}, "duration_ms": 245.3}
+{"timestamp": "2026-11-18T22:54:37.445+00:00", "route": "/submit", "input": {"creator_id": "cap-lat-t1-n3", "text_excerpt": "I wrote this paragraph so a warm request would have something ordinary to score. It is about a walk to the store in the rain, a torn grocery bag, and the orange that rolled into the street. None of th", "text_chars": 367, "letter_ratio": 0.7847}, "output": {"status": 200, "guess": "human", "content_id": "80aafffe-bc87-4d9e-bda9-21af901fa9ac", "combined_score": 0.2551}, "duration_ms": 251.2}
+{"timestamp": "2026-11-18T22:54:37.697+00:00", "route": "/submit", "input": {"creator_id": "cap-lat-t1-n4", "text_excerpt": "I wrote this paragraph so a warm request would have something ordinary to score. It is about a walk to the store in the rain, a torn grocery bag, and the orange that rolled into the street. None of th", "text_chars": 367, "letter_ratio": 0.7847}, "output": {"status": 200, "guess": "human", "content_id": "8fb243c8-8da6-4638-8c17-bccbb4509c23", "combined_score": 0.2551}, "duration_ms": 242.1}
+{"timestamp": "2026-11-18T22:54:37.964+00:00", "route": "/submit", "input": {"creator_id": "cap-lat-t1-n5", "text_excerpt": "I wrote this paragraph so a warm request would have something ordinary to score. It is about a walk to the store in the rain, a torn grocery bag, and the orange that rolled into the street. None of th", "text_chars": 367, "letter_ratio": 0.7847}, "output": {"status": 200, "guess": "human", "content_id": "05a22a5c-5fea-467d-88f2-31d1db4df487", "combined_score": 0.2551}, "duration_ms": 256.6}
+```
+
+One rejected input from the same session (punctuation, not a timeout — the route refused it):
+
+```json
+{"timestamp": "2026-11-18T22:54:08.671+00:00", "route": "/submit", "input": {"creator_id": "cap-nw-t1-n1", "text_excerpt": "!!! ??? ... ,,, ;;; --- ((( )))", "text_chars": 31, "letter_ratio": 0.0}, "output": {"status": 400, "error": "not_writing"}, "duration_ms": 2.5}
+```
+
+**What It Costs**
+
+One warm pass costs **286.6 ms** of compute. There is no API spend and no token bill. The model runs on this CPU.
+
+How I measured it: after the weights were already loaded, `run_capstone.py::measure_cost` sent ten sequential POSTs of the latency paragraph, each with its own `creator_id`, and averaged the client time from send to full response. The ten times were 281.7, 289.0, 263.3, 264.0, 269.4, 319.4, 488.6, 260.0, 182.8, and 248.0 ms. Sum 2866.2 ms / 10 = 286.6 ms.
+
+The first scored request in the session is not in that average. It loaded GPT-2 and took 26550.8 ms (client) / 26531.3 ms (`duration_ms` on `cap-prose-t1-n1`). That cost is once per process, not once per post.
+
+A hundred people, one warm submission each, process already up: 100 × 286.6 ms = 28,660 ms, about **28.7 seconds** of CPU. 100 × $0 = $0.
+
+**Run Log and Verdicts**
+
+Evidence: `results/capstone_before.json`, produced by `run_capstone.py` against the service started from RUNNING.md. Three trials, nothing changed between them.
+
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. Non-writing returns 400 not_writing | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Non-writing adds no guess row | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Refusal is logged under 200 ms | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Ordinary paragraphs still score | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Warm submit within 3 seconds | 9 of 10 | 10/10 | 10/10 | 10/10 | MET |
+
+All five met. Criterion 5's 3000 ms bar is loose next to the warm times, which sat between 182.8 and 488.6 ms on the cost sample and between 251.8 and 368.6 ms on trial 1 of criterion 5. I would tighten that target to 9 of 10 under 1000 ms. I am leaving the written criterion where it is: it was measurable, and it met.
+
+The same session also posted `a` repeated 400 times, which is not one of the five criteria. All three trials returned HTTP 200, `guess: ai`, `combined_score: 0.7585` (trial 1 client time 343.0 ms). Stage: `writing_check.is_writing`. Mechanism: the gate's ratio is letters divided by length, and every character of that string is a letter, so the ratio is 1.0 and the model runs. GPT-2 finds a single repeated character easy to predict, so the label is high-confidence AI for a string that is not a piece of writing. Criteria 1–3 never posted this body, so they could not miss it.
+
+Real output from one run of each criterion:
+
+Criterion 1, `run_capstone.py::criterion_1` → `app.py::_submit_impl`. Trial 1, punctuation string:
+
+```json
+{"error": "not_writing", "letter_ratio": 0.0, "message": "This submission does not contain enough letters to score as writing."}
+```
+
+HTTP 400. No `guess`.
+
+Criterion 2, the audit line appended by that class of refusal, `audit.py::log_rejection` from `app.py::_submit_impl`. Trial 1, first audit check (`cap-audit-t1-n1`):
+
+```json
+{"timestamp": "2026-11-18T22:54:08+00:00", "creator_id": "cap-audit-t1-n1", "event": "rejected", "status": "rejected", "reason": "not_writing", "letter_ratio": 0.0}
+```
+
+No `guess` field.
+
+Criterion 3, the run record from `runlog.py::log_run`. Trial 1, same punctuation post (`cap-nw-t1-n1`):
+
+```json
+{"timestamp": "2026-11-18T22:54:08.671+00:00", "route": "/submit", "input": {"creator_id": "cap-nw-t1-n1", "text_excerpt": "!!! ??? ... ,,, ;;; --- ((( )))", "text_chars": 31, "letter_ratio": 0.0}, "output": {"status": 400, "error": "not_writing"}, "duration_ms": 2.5}
+```
+
+`duration_ms` is 2.5, under 200.
+
+Criterion 4, `app.py::_submit_impl`, trial 1, second paragraph (the first paragraph of the session paid the model load; this one is a warm score):
+
+```json
+{"combined_score": 0.2314, "confidence": 0.2314, "content_id": "3bcb06c6-6f04-476f-b826-e25191ca1104", "guess": "human", "label": "This looks like it was written by a person. We are not treating it as AI-generated.", "model_score": 0.3677, "style_score": 0.0971}
+```
+
+HTTP 200.
+
+Criterion 5, `run_capstone.py::criterion_5`, trial 1, second warm call, after `detector_loaded` was true:
+
+```json
+{"status": 200, "elapsed_ms": 255.2, "guess": "human", "ok": true}
+```
