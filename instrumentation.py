@@ -113,6 +113,7 @@ def log_error(
     entry = {
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
         "event": error_type,
+        "outcome": error_type,
         "stage": stage,
         "message": message,
         "request_id": timing.request_id if timing else None,
@@ -184,4 +185,46 @@ def get_latency_stats(entries: list[dict] | None = None) -> dict[str, Any]:
         "model_p95_ms": percentile(model_latencies, 95),
         "style_p50_ms": percentile(style_latencies, 50),
         "style_p95_ms": percentile(style_latencies, 95),
+    }
+
+
+def get_latency_breakdown(entries: list[dict] | None = None) -> dict[str, Any]:
+    """
+    Get detailed latency breakdown showing where time goes.
+    Stretch goal B: Latency breakdown.
+    """
+    if entries is None:
+        entries = read_instrumentation_log()
+
+    success_entries = [e for e in entries if e.get("outcome") == "success" and e.get("stages")]
+    if not success_entries:
+        return {"count": 0, "breakdown": {}}
+
+    # Aggregate stage times
+    stage_times: dict[str, list[float]] = {}
+    for entry in success_entries:
+        for stage, duration in entry.get("stages", {}).items():
+            if stage not in stage_times:
+                stage_times[stage] = []
+            stage_times[stage].append(duration)
+
+    # Calculate averages and percentages
+    total_avg = sum(sum(times) / len(times) for times in stage_times.values())
+    
+    breakdown = {}
+    for stage, times in sorted(stage_times.items()):
+        avg_ms = sum(times) / len(times)
+        pct = (avg_ms / total_avg * 100) if total_avg > 0 else 0
+        breakdown[stage] = {
+            "avg_ms": round(avg_ms, 2),
+            "min_ms": round(min(times), 2),
+            "max_ms": round(max(times), 2),
+            "pct_of_total": round(pct, 1),
+            "sample_count": len(times),
+        }
+
+    return {
+        "count": len(success_entries),
+        "total_avg_ms": round(total_avg, 2),
+        "breakdown": breakdown,
     }

@@ -317,6 +317,10 @@ def submit():
             "degraded": degraded,
         }
 
+        # Log the request timing before returning
+        timing.outcome = "degraded" if degraded else "success"
+        instrumentation.log_request(timing)
+
         return jsonify(response_data)
 
 
