@@ -24,17 +24,36 @@ Routes:
     GET  /health      is the service up, and is the model loaded
 """
 
+import time
 import uuid
 
-from flask import Flask, jsonify, request
+from flask import Flask, g, jsonify, request
 
 import audit
 import config
 import detector
+import instrumentation
 import scoring
 import stylometry
 
 app = Flask(__name__)
+
+
+# ── Request timeout middleware ───────────────────────────────────────────────
+
+@app.before_request
+def before_request():
+    """Start request timing."""
+    g.request_start = time.perf_counter()
+
+
+@app.after_request
+def after_request(response):
+    """Log request timing if instrumentation context exists."""
+    timing = instrumentation.get_current_timing()
+    if timing:
+        instrumentation.log_request(timing)
+    return response
 
 
 # ── Rate limiting — UNIT 8 ────────────────────────────────────────────────────
@@ -138,15 +157,33 @@ def ping():
 
 @app.get("/health")
 def health():
-    """Is the service up, and has the model been downloaded yet?"""
+    """
+    Is the service up, and has the model been downloaded yet?
+    Enhanced to actually test model responsiveness.
+    """
     import detector
 
     loaded = detector._model is not None
+    responsive = False
+    response_time_ms = None
+
+    if loaded:
+        start = time.perf_counter()
+        responsive = detector.is_model_responsive(timeout=2.0)
+        response_time_ms = round((time.perf_counter() - start) * 1000, 2)
+
+    circuit_breaker = detector.get_circuit_breaker_state()
+    
     return jsonify({
         "ok": True,
         "detector_model": config.DETECTOR_MODEL,
         "detector_loaded": loaded,
+        "detector_responsive": responsive,
+        "detector_response_time_ms": response_time_ms,
+        "circuit_breaker": circuit_breaker,
         "rate_limiting": config.RATE_LIMITING_ENABLED,
+        "lightweight_mode": config.LIGHTWEIGHT_MODE,
+        "model_timeout_seconds": config.MODEL_TIMEOUT_SECONDS,
         "log_entries": len(audit.read_entries()),
     })
 
@@ -230,46 +267,64 @@ def submit():
         }), 400
 
     content_id = str(uuid.uuid4())
+    degraded = False
 
-    try:
-        model_score = detector.model_signal(text)
-    except detector.DetectorUnavailable as exc:
-        audit.log_rejection(
-            creator_id=creator_id,
-            reason="detector_unavailable",
-            detail=str(exc),
+    with instrumentation.request_context(input_length=len(text)) as timing:
+        try:
+            with instrumentation.timed_stage("model_signal"):
+                model_score, model_degraded = detector.model_signal_with_fallback(text)
+                degraded = model_degraded
+
+            if model_degraded:
+                timing.degraded_mode = True
+                timing.outcome = "degraded"
+                instrumentation.log_timeout(timing, "model_signal", timing.stages.get("model_signal", 0))
+
+        except ValueError as exc:
+            timing.outcome = "error"
+            timing.error_stage = "model_signal"
+            timing.error_message = str(exc)
+            instrumentation.log_error(timing, "model_signal", "error", str(exc))
+            audit.log_rejection(creator_id=creator_id, reason="text_too_short", detail=str(exc))
+            return jsonify({"error": "text_too_short", "message": str(exc)}), 400
+
+        with instrumentation.timed_stage("style_signal"):
+            style_score = stylometry.style_signal(text)
+
+        with instrumentation.timed_stage("combine"):
+            combined = scoring.combine_signals(model_score, style_score)
+            guess, label = scoring.score_to_label(combined)
+
+        confidence = combined
+
+        audit.log_decision(
             content_id=content_id,
+            creator_id=creator_id,
+            guess=guess,
+            model_score=model_score,
+            style_score=style_score,
+            combined_score=combined,
+            label=label,
+            status="decided",
+            degraded=degraded,
         )
-        return jsonify({"error": "detector_unavailable", "message": str(exc)}), 503
-    except ValueError as exc:
-        audit.log_rejection(creator_id=creator_id, reason="text_too_short", detail=str(exc))
-        return jsonify({"error": "text_too_short", "message": str(exc)}), 400
 
-    style_score = stylometry.style_signal(text)
-    combined = scoring.combine_signals(model_score, style_score)
-    guess, label = scoring.score_to_label(combined)
-    confidence = combined
+        response_data = {
+            "content_id": content_id,
+            "guess": guess,
+            "confidence": confidence,
+            "label": label,
+            "model_score": model_score,
+            "style_score": style_score,
+            "combined_score": combined,
+            "degraded": degraded,
+        }
 
-    audit.log_decision(
-        content_id=content_id,
-        creator_id=creator_id,
-        guess=guess,
-        model_score=model_score,
-        style_score=style_score,
-        combined_score=combined,
-        label=label,
-        status="decided",
-    )
+        # Log the request timing before returning
+        timing.outcome = "degraded" if degraded else "success"
+        instrumentation.log_request(timing)
 
-    return jsonify({
-        "content_id": content_id,
-        "guess": guess,
-        "confidence": confidence,
-        "label": label,
-        "model_score": model_score,
-        "style_score": style_score,
-        "combined_score": combined,
-    })
+        return jsonify(response_data)
 
 
 @app.post("/appeal")

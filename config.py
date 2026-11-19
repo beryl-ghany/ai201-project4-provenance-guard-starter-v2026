@@ -40,7 +40,14 @@ DEBUG = os.getenv("AI201_DEBUG", "1") == "1" and HOST in ("127.0.0.1", "localhos
 # takes a second or two. That cost is part of what you're learning: this is
 # what running a model inline in a request actually looks like.
 
-DETECTOR_MODEL = os.getenv("AI201_DETECTOR_MODEL", "gpt2")
+# Lightweight mode uses distilgpt2 (~82MB) instead of gpt2 (~550MB) for
+# memory-constrained environments like Render's free tier (512MB).
+LIGHTWEIGHT_MODE = os.getenv("LIGHTWEIGHT_MODE", "0") == "1"
+
+if LIGHTWEIGHT_MODE:
+    DETECTOR_MODEL = os.getenv("AI201_DETECTOR_MODEL", "distilgpt2")
+else:
+    DETECTOR_MODEL = os.getenv("AI201_DETECTOR_MODEL", "gpt2")
 
 # Longer text gives a steadier reading but takes longer. 400 tokens is roughly
 # 300 words, which is enough for the signal to mean something.
@@ -126,3 +133,17 @@ RESULTS_DIR = ROOT / "results"
 # Refuse empty submissions; truncate very long paste-ins instead of crashing.
 MAX_TEXT_CHARS = 50_000
 MIN_TEXT_CHARS = 20
+
+
+# ─── Failure hardening (Capstone) ────────────────────────────────────────────
+
+# Model inference timeout in seconds. If inference takes longer, return degraded mode.
+MODEL_TIMEOUT_SECONDS = float(os.getenv("MODEL_TIMEOUT_SECONDS", "10"))
+
+# Request timeout for the entire request processing (should be > MODEL_TIMEOUT_SECONDS)
+REQUEST_TIMEOUT_SECONDS = float(os.getenv("REQUEST_TIMEOUT_SECONDS", "12"))
+
+# Retry configuration for transient failures
+RETRY_MAX_ATTEMPTS = int(os.getenv("RETRY_MAX_ATTEMPTS", "3"))
+RETRY_BASE_DELAY_SECONDS = float(os.getenv("RETRY_BASE_DELAY_SECONDS", "0.5"))
+RETRY_MAX_DELAY_SECONDS = float(os.getenv("RETRY_MAX_DELAY_SECONDS", "4.0"))

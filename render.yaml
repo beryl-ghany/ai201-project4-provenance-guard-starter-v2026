@@ -1,0 +1,25 @@
+# Render Blueprint for Provenance Guard
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: provenance-guard
+    runtime: python
+    plan: starter  # Starter tier has 512MB RAM - use lightweight mode
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    envVars:
+      - key: HOST
+        value: "0.0.0.0"
+      - key: LIGHTWEIGHT_MODE
+        value: "1"
+      - key: AI201_DEBUG
+        value: "0"
+      - key: AI201_RATE_LIMITS
+        value: "1"
+      - key: MODEL_TIMEOUT_SECONDS
+        value: "10"
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+    healthCheckPath: /health
+    autoDeploy: true
