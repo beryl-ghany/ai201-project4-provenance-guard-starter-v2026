@@ -172,12 +172,15 @@ def health():
         responsive = detector.is_model_responsive(timeout=2.0)
         response_time_ms = round((time.perf_counter() - start) * 1000, 2)
 
+    circuit_breaker = detector.get_circuit_breaker_state()
+    
     return jsonify({
         "ok": True,
         "detector_model": config.DETECTOR_MODEL,
         "detector_loaded": loaded,
         "detector_responsive": responsive,
         "detector_response_time_ms": response_time_ms,
+        "circuit_breaker": circuit_breaker,
         "rate_limiting": config.RATE_LIMITING_ENABLED,
         "lightweight_mode": config.LIGHTWEIGHT_MODE,
         "model_timeout_seconds": config.MODEL_TIMEOUT_SECONDS,

@@ -57,6 +57,59 @@ _model_lock = threading.Lock()
 _executor = ThreadPoolExecutor(max_workers=2)
 
 
+# Circuit breaker state for stretch goal: Second measured improvement
+class CircuitBreaker:
+    """
+    Circuit breaker pattern to prevent cascading failures.
+    
+    States:
+    - CLOSED: Normal operation, requests pass through
+    - OPEN: Too many failures, requests fail fast
+    - HALF_OPEN: Testing if service recovered
+    """
+    CLOSED = "closed"
+    OPEN = "open"
+    HALF_OPEN = "half_open"
+    
+    def __init__(self, failure_threshold: int = 3, reset_timeout: float = 30.0):
+        self.failure_threshold = failure_threshold
+        self.reset_timeout = reset_timeout
+        self.failure_count = 0
+        self.last_failure_time: float | None = None
+        self.state = self.CLOSED
+        self._lock = threading.Lock()
+    
+    def record_success(self) -> None:
+        with self._lock:
+            self.failure_count = 0
+            self.state = self.CLOSED
+    
+    def record_failure(self) -> None:
+        with self._lock:
+            self.failure_count += 1
+            self.last_failure_time = time.time()
+            if self.failure_count >= self.failure_threshold:
+                self.state = self.OPEN
+    
+    def can_proceed(self) -> bool:
+        with self._lock:
+            if self.state == self.CLOSED:
+                return True
+            if self.state == self.OPEN:
+                if self.last_failure_time and (time.time() - self.last_failure_time) > self.reset_timeout:
+                    self.state = self.HALF_OPEN
+                    return True
+                return False
+            # HALF_OPEN: allow one request to test
+            return True
+    
+    def get_state(self) -> str:
+        return self.state
+
+
+_circuit_breaker = CircuitBreaker(failure_threshold=3, reset_timeout=30.0)
+
+
 class DetectorUnavailable(RuntimeError):
     """The model couldn't be loaded — no download yet, or no disk."""
 
@@ -199,15 +252,21 @@ def model_signal(text: str, timeout: float | None = None) -> float:
 
 def model_signal_with_fallback(text: str, timeout: float | None = None) -> tuple[float, bool]:
     """
-    Model signal with graceful degradation.
+    Model signal with graceful degradation and circuit breaker.
 
-    Returns (score, degraded) where degraded=True means the model timed out
-    or was unavailable, and score is a default of 0.5 (neutral).
+    Returns (score, degraded) where degraded=True means the model timed out,
+    was unavailable, or the circuit breaker is open. Score defaults to 0.5 (neutral).
     """
+    # Check circuit breaker first
+    if not _circuit_breaker.can_proceed():
+        return 0.5, True
+    
     try:
         score = model_signal(text, timeout=timeout)
+        _circuit_breaker.record_success()
         return score, False
     except (DetectorTimeout, DetectorUnavailable) as exc:
+        _circuit_breaker.record_failure()
         return 0.5, True
 
 
@@ -222,6 +281,15 @@ def is_model_responsive(timeout: float = 2.0) -> bool:
         return True
     except (DetectorTimeout, DetectorUnavailable, ValueError):
         return False
+
+
+def get_circuit_breaker_state() -> dict:
+    """Get current circuit breaker state for health checks."""
+    return {
+        "state": _circuit_breaker.get_state(),
+        "failure_count": _circuit_breaker.failure_count,
+        "can_proceed": _circuit_breaker.can_proceed(),
+    }
 
 
 def warm_up() -> str:

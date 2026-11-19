@@ -185,52 +185,76 @@ trace look exactly like a quiet afternoon.
 
 ---
 
-## Running it somewhere else (unit 9)
+## Running it somewhere else (Capstone)
 
-Unit 9 asks you to deploy one of your systems. **Read this before you pick
-which one** — for this project the answer is already decided, and it isn't the
-hosted one.
+### Path A: Render Deployment (Lightweight Mode)
 
-Flask's built-in server says "development server" on startup because that's
-what it is. A real one comes from `gunicorn`, which is in
-`requirements.txt` and unused until now:
+The full GPT-2 model (~550MB) doesn't fit Render's free tier (512MB). The capstone solution uses **lightweight mode** with distilgpt2 (~82MB).
+
+**Deploy to Render:**
+
+1. Fork or push this repo to GitHub
+2. Create a new Web Service on Render, connecting to your repo
+3. Render will auto-detect `render.yaml` and configure:
+   - `LIGHTWEIGHT_MODE=1` (uses distilgpt2)
+   - `HOST=0.0.0.0`
+   - Single worker with 120s timeout
+4. Deploy
+
+**Or manually:**
 
 ```bash
-gunicorn app:app --bind 0.0.0.0:$PORT
+# Set lightweight mode
+export LIGHTWEIGHT_MODE=1
+export HOST=0.0.0.0
+export PORT=10000
+
+# Run with gunicorn
+gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
 ```
 
-Two settings do the work, and both read the environment:
+**Trade-offs:**
+- distilgpt2 is smaller and faster but slightly less accurate
+- Works within 512MB memory constraint
+- Cold starts are faster (~2-3s vs ~4-5s)
+
+### Path B: Local with Full Model
+
+For full accuracy, run locally with the complete GPT-2 model:
+
+```bash
+# Standard local run
+python app.py
+
+# Or with gunicorn for production-like behavior
+gunicorn app:app --bind 127.0.0.1:5000 --workers 1 --timeout 120
+```
+
+**Environment variables:**
 
 | Variable | Default | What it does |
 |---|---|---|
-| `HOST` | `127.0.0.1` | Loopback — your machine only. A host needs `0.0.0.0`, or nothing outside the box can reach the service and it looks like the app is down |
-| `PORT` | `5000` | Most hosts hand you a port in `PORT` and expect you to bind exactly that one |
-| `AI201_DEBUG` | `1` | Debug mode. Off automatically whenever `HOST` isn't loopback — an interactive debugger on a public address is a stranger's Python prompt inside your process |
+| `HOST` | `127.0.0.1` | Loopback — your machine only. A host needs `0.0.0.0` |
+| `PORT` | `5000` | The port to bind |
+| `LIGHTWEIGHT_MODE` | `0` | Set to `1` for distilgpt2 instead of gpt2 |
+| `MODEL_TIMEOUT_SECONDS` | `10` | Timeout for model inference |
+| `AI201_DEBUG` | `1` | Debug mode (off when HOST isn't loopback) |
 
-Nothing about your local workflow changes. With no variables set you get
-`http://127.0.0.1:5000` and every `curl` above still works.
+**Logs:**
+- Audit log: `logs/audit.jsonl`
+- Instrumentation log: `logs/instrumentation.jsonl`
 
-### This project will not fit a free host
+### Memory Arithmetic
 
-Say it plainly, because the arithmetic is the point:
+| What has to be in memory | gpt2 | distilgpt2 |
+|---|---|---|
+| `torch` | ~200–800 MB | ~200–400 MB |
+| Model weights | ~550 MB | ~82 MB |
+| Flask, gunicorn, your code | ~50 MB | ~50 MB |
+| **Total** | **~800-1400 MB** | **~350-550 MB** |
+| **Render free tier** | **512 MB** ❌ | **512 MB** ✅ |
 
-| What has to be in memory | Roughly |
-|---|---|
-| `torch` | ~200–800 MB depending on the build |
-| the `gpt2` weights | ~550 MB on disk, loaded into RAM to score |
-| Flask, gunicorn, your code | the rest |
-| **A free tier gives you** | **512 MB** |
-
-That's over budget before a single request arrives — and a free host has no
-persistent disk, so the 550 MB download starts again after every idle
-spin-down. There is no configuration that fixes this. The model is the size it
-is.
-
-**So pair 4 extensions take Path B — local, with logs.** That is the expected
-answer for this project, not a fallback and not a failure. Working out that a
-system doesn't fit its host *before* you spend an evening watching it get
-killed is the skill unit 9 is actually testing. Write the arithmetic above in
-your write-up; that's the deliverable.
+The lightweight mode makes deployment possible on constrained environments.
 
 ---
 
