@@ -1,71 +1,12 @@
-# Acceptance criteria — Provenance Guard
+# Capstone acceptance criteria — Provenance Guard
 
-Five criteria that say what "working" means for this service, written in unit 7
-**before** the build was scored against them.
+These five are the capstone criteria for the extension in this unit. They were
+written before any capstone trial. Criteria 1, 2, and 3 are about that
+extension: refusing text that is not writing. Criterion 4 checks that ordinary
+paragraphs still score. Criterion 5 checks a warm request.
 
----
-
-## 1. At most 1 of 10 pieces I wrote myself is labeled high-confidence AI
-
-On ten short pieces I wrote without AI help, at most one may receive the
-high-confidence AI label (`guess` is `ai` and combined score is at least 0.65).
-
-**Why this target:** On a writing site, a false accusation is the expensive
-mistake. One in ten wrong flags is already harsh from a writer's point of view,
-but it gives me room for plain, predictable prose that my model signal misreads.
-
----
-
-## 2. Clearly AI and clearly human samples differ by at least 0.25 combined score
-
-On my four calibration texts (clearly AI, clearly human, plain human, lightly
-edited AI), the highest and lowest combined scores must be at least 0.25 apart.
-
-**Why this target:** If everything lands in a narrow band, the two signals and
-weights are not separating anything, and the labels are cosmetic. A quarter-point
-spread is modest but observable on the same machine.
-
----
-
-## 3. Each of the three reader labels is reachable on at least one submission
-
-For high-confidence human, unsure, and high-confidence AI, there exists at least
-one submitted text whose response uses that label.
-
-**Why this target:** A label nobody ever sees is not a product decision — it is
-dead code. Milestone 5 requires me to prove each band is reachable with real POSTs.
-
----
-
-## 4. Every valid appeal moves status to under_review and appends a log entry
-
-For any `content_id` that already has a decision row in `logs/audit.jsonl`, POST
-`/appeal` returns success, and the next log line for that id has
-`status: "under_review"` and an `event: "appeal"` with the writer's reasoning.
-
-**Why this target:** The appeal path is the only recovery when the system is wrong.
-If it does not always log and change status, a writer has no evidence they pushed back.
-
----
-
-## 5. Missing or empty text returns HTTP 400 and does not write a decision row
-
-When `text` is missing, null, or only whitespace, POST `/submit` returns 400 with
-an error field, and no new entry with a `guess` field is appended to the audit log
-for that request.
-
-**Why this target:** Bad input is normal at the edge. Crashing or logging a fake
-decision on empty bodies would pollute the audit trail I need in unit 8 to diagnose attacks.
-
----
-
-# Capstone criteria
-
-These five are for the capstone extension. They were written before any capstone
-trial. The five above are the unit 7 criteria and stay as they were.
-
-Letter ratio, where a criterion depends on it, means the count of Unicode letters
-(`str.isalpha`) divided by `len(text)`, on the string posted.
+Letter ratio means the count of Unicode letters (`str.isalpha`) divided by
+`len(text)`, on the string posted.
 
 The five non-writing strings:
 
@@ -163,9 +104,8 @@ as a number.
 **Why this target:** The gate is a failure path in front of a system that already
 scored prose. If any of these five is rejected, the extension broke the original
 job. These five are all above a 0.60 letter ratio, well clear of the 0.40 floor,
-so a miss here is the gate or the route, not a borderline ratio. I am not
-requiring a particular label: the old criteria already cover that, and this one
-only checks that a real paragraph is still scored.
+so a miss here is the gate or the route, not a borderline ratio. This criterion
+does not require a particular label. It checks that a real paragraph is still scored.
 
 **What would fail it:** Any paragraph returns a status other than 200, or the
 body is missing `guess`, `model_score`, or `style_score`.
@@ -193,3 +133,63 @@ on purpose: that wait is process start, not one pass.
 
 **What would fail it:** Two or more of the ten calls take over 3000 ms, or return
 a status other than 200.
+
+---
+
+# Unit 7 criteria — not this unit
+
+The five criteria below are from unit 7. They are kept so that project stays
+intact. They are not the capstone criteria. The capstone five are the numbered
+criteria at the top of this file.
+
+## Unit 7 — 1. At most 1 of 10 pieces I wrote myself is labeled high-confidence AI
+
+On ten short pieces I wrote without AI help, at most one may receive the
+high-confidence AI label (`guess` is `ai` and combined score is at least 0.65).
+
+**Why this target:** On a writing site, a false accusation is the expensive
+mistake. One in ten wrong flags is already harsh from a writer's point of view,
+but it gives me room for plain, predictable prose that my model signal misreads.
+
+---
+
+## Unit 7 — 2. Clearly AI and clearly human samples differ by at least 0.25 combined score
+
+On my four calibration texts (clearly AI, clearly human, plain human, lightly
+edited AI), the highest and lowest combined scores must be at least 0.25 apart.
+
+**Why this target:** If everything lands in a narrow band, the two signals and
+weights are not separating anything, and the labels are cosmetic. A quarter-point
+spread is modest but observable on the same machine.
+
+---
+
+## Unit 7 — 3. Each of the three reader labels is reachable on at least one submission
+
+For high-confidence human, unsure, and high-confidence AI, there exists at least
+one submitted text whose response uses that label.
+
+**Why this target:** A label nobody ever sees is not a product decision — it is
+dead code. Milestone 5 requires me to prove each band is reachable with real POSTs.
+
+---
+
+## Unit 7 — 4. Every valid appeal moves status to under_review and appends a log entry
+
+For any `content_id` that already has a decision row in `logs/audit.jsonl`, POST
+`/appeal` returns success, and the next log line for that id has
+`status: "under_review"` and an `event: "appeal"` with the writer's reasoning.
+
+**Why this target:** The appeal path is the only recovery when the system is wrong.
+If it does not always log and change status, a writer has no evidence they pushed back.
+
+---
+
+## Unit 7 — 5. Missing or empty text returns HTTP 400 and does not write a decision row
+
+When `text` is missing, null, or only whitespace, POST `/submit` returns 400 with
+an error field, and no new entry with a `guess` field is appended to the audit log
+for that request.
+
+**Why this target:** Bad input is normal at the edge. Crashing or logging a fake
+decision on empty bodies would pollute the audit trail I need in unit 8 to diagnose attacks.
