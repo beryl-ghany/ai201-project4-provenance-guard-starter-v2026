@@ -41,54 +41,94 @@ four calibration inputs. Add a plainly-written human paragraph to them and see
 for yourself where it lands.
 """
 
+import functools
 import math
+import random
+import signal
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 
 import config
 
 _model = None
 _tokenizer = None
+_model_lock = threading.Lock()
+_executor = ThreadPoolExecutor(max_workers=2)
 
 
 class DetectorUnavailable(RuntimeError):
     """The model couldn't be loaded — no download yet, or no disk."""
 
 
+class DetectorTimeout(RuntimeError):
+    """The model inference timed out."""
+
+
+class TransientError(RuntimeError):
+    """A transient error that may succeed on retry."""
+
+
+def retry_with_backoff(max_attempts: int | None = None, base_delay: float | None = None):
+    """Decorator for retry with exponential backoff on transient failures."""
+    if max_attempts is None:
+        max_attempts = config.RETRY_MAX_ATTEMPTS
+    if base_delay is None:
+        base_delay = config.RETRY_BASE_DELAY_SECONDS
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            last_exception = None
+            for attempt in range(max_attempts):
+                try:
+                    return func(*args, **kwargs)
+                except TransientError as e:
+                    last_exception = e
+                    if attempt < max_attempts - 1:
+                        delay = min(
+                            base_delay * (2 ** attempt) + random.uniform(0, 0.1),
+                            config.RETRY_MAX_DELAY_SECONDS
+                        )
+                        time.sleep(delay)
+            raise last_exception
+        return wrapper
+    return decorator
+
+
 def _load():
     """Load the model once and keep it. First call downloads ~550 MB."""
     global _model, _tokenizer
-    if _model is not None:
+    with _model_lock:
+        if _model is not None:
+            return _model, _tokenizer
+
+        try:
+            import torch  # noqa: F401
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+        except ImportError as exc:
+            raise DetectorUnavailable(
+                f"transformers or torch isn't installed ({exc}).\n"
+                f"Run: pip install -r requirements.txt"
+            ) from exc
+
+        try:
+            _tokenizer = AutoTokenizer.from_pretrained(config.DETECTOR_MODEL)
+            _model = AutoModelForCausalLM.from_pretrained(config.DETECTOR_MODEL)
+            _model.eval()
+        except Exception as exc:  # noqa: BLE001
+            raise DetectorUnavailable(
+                f"Couldn't load '{config.DETECTOR_MODEL}': {exc}\n"
+                f"The first run downloads about 550 MB — check your connection and "
+                f"that you have disk space free."
+            ) from exc
+
         return _model, _tokenizer
 
-    try:
-        import torch  # noqa: F401
-        from transformers import AutoModelForCausalLM, AutoTokenizer
-    except ImportError as exc:
-        raise DetectorUnavailable(
-            f"transformers or torch isn't installed ({exc}).\n"
-            f"Run: pip install -r requirements.txt"
-        ) from exc
 
-    try:
-        _tokenizer = AutoTokenizer.from_pretrained(config.DETECTOR_MODEL)
-        _model = AutoModelForCausalLM.from_pretrained(config.DETECTOR_MODEL)
-        _model.eval()
-    except Exception as exc:  # noqa: BLE001
-        raise DetectorUnavailable(
-            f"Couldn't load '{config.DETECTOR_MODEL}': {exc}\n"
-            f"The first run downloads about 550 MB — check your connection and "
-            f"that you have disk space free."
-        ) from exc
-
-    return _model, _tokenizer
-
-
-def perplexity(text: str) -> float:
+def _perplexity_inner(text: str) -> float:
     """
-    How surprised the model is by this text. Lower means more predictable.
-
-    Returns a positive number. Typical values land roughly between 10 and 200,
-    but that range shifts with topic and length, which is one reason the raw
-    number isn't what you score on.
+    Inner perplexity computation without timeout handling.
     """
     import torch
 
@@ -102,18 +142,38 @@ def perplexity(text: str) -> float:
     )
     input_ids = encoded["input_ids"]
 
-    # Two tokens is not enough to be surprised by anything.
     if input_ids.shape[1] < 3:
         raise ValueError("Text is too short to score — a few sentences at least.")
 
     with torch.no_grad():
         output = model(input_ids, labels=input_ids)
 
-    # The model's loss here IS mean negative log-likelihood per token.
     return float(math.exp(output.loss.item()))
 
 
-def model_signal(text: str) -> float:
+def perplexity(text: str, timeout: float | None = None) -> float:
+    """
+    How surprised the model is by this text. Lower means more predictable.
+
+    Returns a positive number. Typical values land roughly between 10 and 200,
+    but that range shifts with topic and length, which is one reason the raw
+    number isn't what you score on.
+
+    If timeout is provided and exceeded, raises DetectorTimeout.
+    """
+    if timeout is None:
+        timeout = config.MODEL_TIMEOUT_SECONDS
+
+    future = _executor.submit(_perplexity_inner, text)
+    try:
+        return future.result(timeout=timeout)
+    except FuturesTimeoutError:
+        future.cancel()
+        raise DetectorTimeout(f"Model inference timed out after {timeout}s")
+
+
+@retry_with_backoff()
+def model_signal(text: str, timeout: float | None = None) -> float:
     """
     The signal, as a 0–1 score. **Higher means more likely AI.**
 
@@ -124,8 +184,10 @@ def model_signal(text: str) -> float:
     You may want to move that midpoint once you've run the four calibration
     inputs in Milestone 4 and seen what your own text actually scores. If you
     do, say so in your README: it's a scoring decision, not a detail.
+
+    Includes retry logic for transient failures and timeout handling.
     """
-    ppl = perplexity(text)
+    ppl = perplexity(text, timeout=timeout)
 
     midpoint = 45.0    # perplexity that scores 0.5
     steepness = 1.6    # how sharply the score moves either side of it
@@ -133,6 +195,33 @@ def model_signal(text: str) -> float:
     # Logistic on log-perplexity. Low perplexity -> high AI score.
     score = 1.0 / (1.0 + (ppl / midpoint) ** steepness)
     return round(min(max(score, 0.0), 1.0), 4)
+
+
+def model_signal_with_fallback(text: str, timeout: float | None = None) -> tuple[float, bool]:
+    """
+    Model signal with graceful degradation.
+
+    Returns (score, degraded) where degraded=True means the model timed out
+    or was unavailable, and score is a default of 0.5 (neutral).
+    """
+    try:
+        score = model_signal(text, timeout=timeout)
+        return score, False
+    except (DetectorTimeout, DetectorUnavailable) as exc:
+        return 0.5, True
+
+
+def is_model_responsive(timeout: float = 2.0) -> bool:
+    """
+    Quick health check: can the model respond within timeout?
+    Uses a short test string to verify model is loaded and responsive.
+    """
+    test_text = "This is a quick test to check if the model responds."
+    try:
+        _ = perplexity(test_text, timeout=timeout)
+        return True
+    except (DetectorTimeout, DetectorUnavailable, ValueError):
+        return False
 
 
 def warm_up() -> str:
